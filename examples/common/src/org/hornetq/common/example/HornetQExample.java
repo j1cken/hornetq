@@ -13,238 +13,271 @@
 package org.hornetq.common.example;
 
 import org.hornetq.api.core.TransportConfiguration;
+import org.hornetq.api.core.management.HornetQServerControl;
+import org.hornetq.api.core.management.ObjectNameBuilder;
+import org.hornetq.api.jms.management.JMSQueueControl;
 import org.hornetq.core.client.impl.DelegatingSession;
 import org.hornetq.jms.client.HornetQConnection;
 
+import javax.jms.Connection;
+import javax.jms.JMSException;
+import javax.jms.Queue;
+import javax.management.MBeanServerConnection;
+import javax.management.MBeanServerInvocationHandler;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
+import javax.naming.InitialContext;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.logging.Logger;
-
-import javax.jms.Connection;
-import javax.naming.InitialContext;
 
 /**
  * a baee class for examples. This takes care of starting and stopping the server as well as deploying any queue needed.
  *
  * @author <a href="mailto:andy.taylor@jboss.org">Andy Taylor</a>
  */
-public abstract class HornetQExample
-{
-   protected static Logger log = Logger.getLogger(HornetQExample.class.getName());
+public abstract class HornetQExample {
+    protected static Logger log = Logger.getLogger(HornetQExample.class.getName());
 
-   private Process[] servers;
+    private Process[] servers;
 
-   protected boolean failure = false;
+    protected boolean failure = false;
 
-   protected String serverClasspath;
+    protected String serverClasspath;
 
-   protected String serverProps;
+    protected String serverProps;
 
-   public abstract boolean runExample() throws Exception;
+    public abstract boolean runExample() throws Exception;
 
-   private boolean logServerOutput;
+    private boolean logServerOutput;
 
-   protected String[] configs;
-   
-   protected boolean runServer;
+    protected String[] configs;
 
-   protected void run(final String[] configs)
-   {
-      String runServerProp = System.getProperty("hornetq.example.runServer");
-      String logServerOutputProp = System.getProperty("hornetq.example.logserveroutput");
-      serverClasspath = System.getProperty("hornetq.example.server.classpath");
-      runServer = runServerProp == null ? true : Boolean.valueOf(runServerProp);
-      logServerOutput = logServerOutputProp == null ? false : Boolean.valueOf(logServerOutputProp);
-      serverProps = System.getProperty("hornetq.example.server.args");
-      if (System.getProperty("hornetq.example.server.override.args") != null)
-      {
-         serverProps = System.getProperty("hornetq.example.server.override.args");
-      }
-      System.out.println("serverProps = " + serverProps);
-      HornetQExample.log.info("hornetq.example.runServer is " + runServer);
+    protected boolean runServer;
 
-      this.configs = configs;
+    protected void run(final String[] configs) {
+        String runServerProp = System.getProperty("hornetq.example.runServer");
+        String logServerOutputProp = System.getProperty("hornetq.example.logserveroutput");
+        serverClasspath = System.getProperty("hornetq.example.server.classpath");
+        runServer = runServerProp == null ? true : Boolean.valueOf(runServerProp);
+        logServerOutput = logServerOutputProp == null ? false : Boolean.valueOf(logServerOutputProp);
+        serverProps = System.getProperty("hornetq.example.server.args");
+        if (System.getProperty("hornetq.example.server.override.args") != null) {
+            serverProps = System.getProperty("hornetq.example.server.override.args");
+        }
+        System.out.println("serverProps = " + serverProps);
+        HornetQExample.log.info("hornetq.example.runServer is " + runServer);
 
-      try
-      {
-         if (runServer)
-         {
-            startServers();
-         }
+        this.configs = configs;
 
-         if (!runExample())
-         {
+        try {
+            if (runServer) {
+                startServers();
+            }
+
+            if (!runExample()) {
+                failure = true;
+            }
+            System.out.println("example complete");
+        } catch (Throwable e) {
             failure = true;
-         }
-         System.out.println("example complete");
-      }
-      catch (Throwable e)
-      {
-         failure = true;
-         e.printStackTrace();
-      }
-      finally
-      {
-         if (runServer)
-         {
-            try
-            {
-               stopServers();
+            e.printStackTrace();
+        } finally {
+            if (runServer) {
+                try {
+                    stopServers();
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace();
+                }
             }
-            catch (Throwable throwable)
-            {
-               throwable.printStackTrace();
+        }
+        reportResultAndExit();
+    }
+
+    protected void killServer(final int id) throws Exception {
+        System.out.println("Killing server " + id);
+
+        // We kill the server by creating a new file in the server dir which is checked for by the server
+        // We can't use Process.destroy() since this does not do a hard kill - it causes shutdown hooks
+        // to be called which cleanly shutdown the server
+        File file = new File("server" + id + "/KILL_ME");
+
+        file.createNewFile();
+
+        // Sleep longer than the KillChecker check period
+        Thread.sleep(1000);
+    }
+
+    protected void stopServer(final int id) throws Exception {
+        System.out.println("Stopping server " + id);
+
+        stopServer(servers[id]);
+    }
+
+    protected InitialContext getContext(final int serverId) throws Exception {
+        String jndiFilename = "server" + serverId + "/client-jndi.properties";
+        File jndiFile = new File(jndiFilename);
+        HornetQExample.log.info("using " + jndiFile + " for jndi");
+        Properties props = new Properties();
+        FileInputStream inStream = null;
+        try {
+            inStream = new FileInputStream(jndiFile);
+            props.load(inStream);
+        } finally {
+            if (inStream != null) {
+                inStream.close();
             }
-         }
-      }
-      reportResultAndExit();
-   }
+        }
+        return new InitialContext(props);
+    }
 
-   protected void killServer(final int id) throws Exception
-   {
-      System.out.println("Killing server " + id);
+    protected void startServer(final int index) throws Exception {
+        String config = configs[index];
+        HornetQExample.log.info("starting server with config '" + config + "' " + "logServerOutput " + logServerOutput);
+        String debugProp = System.getProperty("server" + index);
+        boolean debugServer = "true".equals(debugProp);
+        servers[index] = SpawnedVMSupport.spawnVM(serverClasspath,
+                "HornetQServer_" + index,
+                SpawnedHornetQServer.class.getName(),
+                serverProps,
+                logServerOutput,
+                "STARTED::",
+                "FAILED::",
+                config,
+                debugServer,
+                "hornetq-beans.xml");
+    }
 
-      // We kill the server by creating a new file in the server dir which is checked for by the server
-      // We can't use Process.destroy() since this does not do a hard kill - it causes shutdown hooks
-      // to be called which cleanly shutdown the server
-      File file = new File("server" + id + "/KILL_ME");
+    protected void reStartServer(final int index) throws Exception {
+        String config = configs[index];
+        HornetQExample.log.info("starting server with config '" + config + "' " + "logServerOutput " + logServerOutput);
+        File f = new File(config + "/KILL_ME");
+        f.delete();
+        String debugProp = System.getProperty("server" + index);
+        boolean debugServer = "true".equals(debugProp);
+        servers[index] = SpawnedVMSupport.spawnVM(serverClasspath,
+                "HornetQServer_" + index,
+                SpawnedHornetQServer.class.getName(),
+                serverProps,
+                logServerOutput,
+                "STARTED::",
+                "FAILED::",
+                config,
+                debugServer,
+                "hornetq-beans.xml");
+    }
 
-      file.createNewFile();
-      
-      // Sleep longer than the KillChecker check period
-      Thread.sleep(1000);
-   }
+    protected void startServers() throws Exception {
+        servers = new Process[configs.length];
+        for (int i = 0; i < configs.length; i++) {
+            startServer(i);
+        }
+    }
 
-   protected void stopServer(final int id) throws Exception
-   {
-      System.out.println("Stopping server " + id);
+    protected void stopServers() throws Exception {
+        for (Process server : servers) {
+            if (server != null) {
+                stopServer(server);
+            }
+        }
+    }
 
-      stopServer(servers[id]);
-   }
-
-   protected InitialContext getContext(final int serverId) throws Exception
-   {
-      String jndiFilename = "server" + serverId + "/client-jndi.properties";
-      File jndiFile = new File(jndiFilename);
-      HornetQExample.log.info("using " + jndiFile + " for jndi");
-      Properties props = new Properties();
-      FileInputStream inStream = null;
-      try
-      {
-         inStream = new FileInputStream(jndiFile);
-         props.load(inStream);
-      }
-      finally
-      {
-         if (inStream != null)
-         {
-            inStream.close();
-         }
-      }
-      return new InitialContext(props);
-   }
-
-   protected void startServer(final int index) throws Exception
-   {
-      String config = configs[index];
-      HornetQExample.log.info("starting server with config '" + config + "' " + "logServerOutput " + logServerOutput);
-      String debugProp = System.getProperty("server" + index);
-      boolean debugServer= "true".equals(debugProp);
-      servers[index] = SpawnedVMSupport.spawnVM(serverClasspath,
-                                                "HornetQServer_" + index,
-                                                SpawnedHornetQServer.class.getName(),
-                                                serverProps,
-                                                logServerOutput,
-                                                "STARTED::",
-                                                "FAILED::",
-                                                config,
-                                                debugServer,
-                                                "hornetq-beans.xml");
-   }
-
-   protected void reStartServer(final int index) throws Exception
-   {
-      String config = configs[index];
-      HornetQExample.log.info("starting server with config '" + config + "' " + "logServerOutput " + logServerOutput);
-      File f = new File(config + "/KILL_ME");
-      f.delete();
-      String debugProp = System.getProperty("server" + index);
-      boolean debugServer= "true".equals(debugProp);
-      servers[index] = SpawnedVMSupport.spawnVM(serverClasspath,
-                                                "HornetQServer_" + index,
-                                                SpawnedHornetQServer.class.getName(),
-                                                serverProps,
-                                                logServerOutput,
-                                                "STARTED::",
-                                                "FAILED::",
-                                                config,
-                                                debugServer,
-                                                "hornetq-beans.xml");
-   }
-
-   protected void startServers() throws Exception
-   {
-      servers = new Process[configs.length];
-      for (int i = 0; i < configs.length; i++)
-      {
-         startServer(i);
-      }
-   }
-
-   protected void stopServers() throws Exception
-   {
-      for (Process server : servers)
-      {
-         if (server != null)
-         {
-            stopServer(server);
-         }
-      }
-   }
-
-   protected void stopServer(final Process server) throws Exception
-   {
-      if (!System.getProperty("os.name").contains("Windows") && !System.getProperty("os.name").contains("Mac OS X"))
-      {
-         if (server.getInputStream() != null)
-         {
-            server.getInputStream().close();
-         }
-         if (server.getErrorStream() != null)
-         {
-            server.getErrorStream().close();
-         }
-      }
-      server.destroy();
-   }
+    protected void stopServer(final Process server) throws Exception {
+        if (!System.getProperty("os.name").contains("Windows") && !System.getProperty("os.name").contains("Mac OS X")) {
+            if (server.getInputStream() != null) {
+                server.getInputStream().close();
+            }
+            if (server.getErrorStream() != null) {
+                server.getErrorStream().close();
+            }
+        }
+        server.destroy();
+    }
 
 
-   protected int getServer(Connection connection)
-   {
-      DelegatingSession session = (DelegatingSession) ((HornetQConnection) connection).getInitialSession();
-      TransportConfiguration transportConfiguration = session.getSessionFactory().getConnectorConfiguration();
-      String port = (String) transportConfiguration.getParams().get("port");
-      return Integer.valueOf(port) - 5445;
-   }
-   
-   private void reportResultAndExit()
-   {
-      if (failure)
-      {
-         System.err.println();
-         System.err.println("#####################");
-         System.err.println("###    FAILURE!   ###");
-         System.err.println("#####################");
-         System.exit(1);
-      }
-      else
-      {
-         System.out.println();
-         System.out.println("#####################");
-         System.out.println("###    SUCCESS!   ###");
-         System.out.println("#####################");
-         System.exit(0);
-      }
-   }
+    protected int getServer(Connection connection) {
+        DelegatingSession session = (DelegatingSession) ((HornetQConnection) connection).getInitialSession();
+        TransportConfiguration transportConfiguration = session.getSessionFactory().getConnectorConfiguration();
+        String port = (String) transportConfiguration.getParams().get("port");
+        return Integer.valueOf(port) - 5445;
+    }
+
+    private void reportResultAndExit() {
+        if (failure) {
+            System.err.println();
+            System.err.println("#####################");
+            System.err.println("###    FAILURE!   ###");
+            System.err.println("#####################");
+            System.exit(1);
+        } else {
+            System.out.println();
+            System.out.println("#####################");
+            System.out.println("###    SUCCESS!   ###");
+            System.out.println("#####################");
+            System.exit(0);
+        }
+    }
+
+    protected HornetQServerControl getServerControl(final String jmxRmiPort) throws Exception {
+        MBeanServerConnection mbsc = getMBeanServer(jmxRmiPort);
+
+
+        // Step 12. Create a JMSQueueControl proxy to manage the queue on the server
+        HornetQServerControl serverControl = (HornetQServerControl) MBeanServerInvocationHandler.newProxyInstance(mbsc,
+                ObjectNameBuilder.DEFAULT.getHornetQServerObjectName(),
+                HornetQServerControl.class,
+                false);
+        return serverControl;
+    }
+
+    private MBeanServerConnection getMBeanServer(String jmxRmiPort) throws IOException {
+        // Step 10. Create JMX Connector to connect to the server's MBeanServer
+        final String JMX_URL = "service:jmx:rmi:///jndi/rmi://localhost:" + jmxRmiPort + "/jmxrmi";
+        JMXConnector connector = JMXConnectorFactory.connect(new JMXServiceURL(JMX_URL), new HashMap());
+
+        // Step 11. Retrieve the MBeanServerConnection
+        return connector.getMBeanServerConnection();
+    }
+
+    protected JMSQueueControl getJMSQueueControl(final String jmxRmiPort, final Queue q) throws Exception {
+        return getJMSQueueControl(jmxRmiPort, q.getQueueName());
+
+    }
+
+    protected JMSQueueControl getJMSQueueControl(final String jmxRmiPort, final String q) throws Exception {
+        MBeanServerConnection mbsc = getMBeanServer(jmxRmiPort);
+
+        // Step 12. Create a JMSQueueControl proxy to manage the queue on the server
+        JMSQueueControl queueControl = (JMSQueueControl) MBeanServerInvocationHandler.newProxyInstance(mbsc,
+                ObjectNameBuilder.DEFAULT.getJMSQueueObjectName(q),
+                JMSQueueControl.class,
+                false);
+        return queueControl;
+    }
+
+    protected void clearServer(final int... serverId) {
+        for (int i = 0; i < serverId.length; i++) {
+            log.info("deleting server" + serverId[i] + "/data directory ...");
+
+            File path = new File("server" + serverId[i] + "/data");
+            deleteDirectory(path);
+        }
+    }
+
+    private void deleteDirectory(File path) {
+        if (path.exists()) {
+            File[] files = path.listFiles();
+            for (int i = 0; i < files.length; i++) {
+                if (files[i].isDirectory()) {
+                    deleteDirectory(files[i]);
+                } else {
+                    files[i].delete();
+                }
+            }
+        }
+    }
 }
