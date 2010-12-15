@@ -12,88 +12,91 @@
   -->
 
 <configuration xmlns="urn:hornetq"
-            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-            xsi:schemaLocation="urn:hornetq /schema/hornetq-configuration.xsd">
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="urn:hornetq/schema/hornetq-configuration.xsd">
 
-   <clustered>true</clustered>
+    <clustered>true</clustered>
 
-   <!-- Connectors -->
+    <cluster-user>guest</cluster-user>
+    <cluster-password>guest</cluster-password>
 
-   <connectors>
-      <connector name="netty-connector">
-         <factory-class>org.hornetq.core.remoting.impl.netty.NettyConnectorFactory</factory-class>
-         <param key="port" value="5445"/>
-      </connector>
-   </connectors>
-   
-   <!-- Acceptors -->
-   <acceptors>
-      <acceptor name="netty-acceptor">
-         <factory-class>org.hornetq.core.remoting.impl.netty.NettyAcceptorFactory</factory-class>
-         <param key="port" value="5445"/>
-      </acceptor>
-   </acceptors>
-   
-   <!-- Clustering configuration -->
-   <broadcast-groups>
-      <broadcast-group name="my-broadcast-group">
+    <!-- Connectors -->
+
+    <connectors>
+        <connector name="netty-connector">
+            <factory-class>org.hornetq.core.remoting.impl.netty.NettyConnectorFactory</factory-class>
+            <param key="port" value="5445"/>
+        </connector>
+    </connectors>
+
+    <!-- Acceptors -->
+    <acceptors>
+        <acceptor name="netty-acceptor">
+            <factory-class>org.hornetq.core.remoting.impl.netty.NettyAcceptorFactory</factory-class>
+            <param key="port" value="5445"/>
+        </acceptor>
+    </acceptors>
+
+    <!-- Clustering configuration -->
+    <broadcast-groups>
+        <broadcast-group name="my-broadcast-group">
             <local-bind-address>127.0.0.1</local-bind-address>
-            <local-bind-port>-1</local-bind-port>
-         <group-address>231.7.7.7</group-address>
-         <group-port>9876</group-port>
-         <broadcast-period>100</broadcast-period>
-         <connector-ref connector-name="netty-connector"/>
-      </broadcast-group>
-   </broadcast-groups>
-   
-   <discovery-groups>
-      <discovery-group name="my-discovery-group">
-          <local-bind-address>127.0.0.1</local-bind-address>
-          <!--<local-bind-port>-1</local-bind-port>-->
-         <group-address>231.7.7.7</group-address>
-         <group-port>9876</group-port>
-         <refresh-timeout>10000</refresh-timeout>
-      </discovery-group>
-   </discovery-groups>
+            <local-bind-port>8888</local-bind-port>
+            <group-address>231.7.7.7</group-address>
+            <group-port>9876</group-port>
+            <broadcast-period>100</broadcast-period>
+            <connector-ref>netty-connector</connector-ref>
+        </broadcast-group>
+    </broadcast-groups>
 
-   <cluster-connections>
-      <cluster-connection name="my-cluster">
-         <address>jms</address>
-         <discovery-group-ref discovery-group-name="my-discovery-group"/>
-      </cluster-connection>
-   </cluster-connections>
-   
-   <!-- Other config -->
+    <discovery-groups>
+        <discovery-group name="my-discovery-group">
+            <local-bind-address>127.0.0.1</local-bind-address>
+            <group-address>231.7.7.7</group-address>
+            <group-port>9876</group-port>
+            <refresh-timeout>10000</refresh-timeout>
+        </discovery-group>
+    </discovery-groups>
 
-   <security-settings>
-      <!--security for example queue-->
-      <security-setting match="jms.#">
-         <permission type="createDurableQueue" roles="guest"/>
-         <permission type="deleteDurableQueue" roles="guest"/>
-         <permission type="createNonDurableQueue" roles="guest"/>
-         <permission type="deleteNonDurableQueue" roles="guest"/>
-         <permission type="consume" roles="guest"/>
-         <permission type="send" roles="guest"/>
-      </security-setting>
-   </security-settings>
+    <cluster-connections>
+        <cluster-connection name="my-cluster">
+            <address>jms</address>
+            <connector-ref>netty-connector</connector-ref>
+            <!--<retry-interval>500</retry-interval>-->
+            <!--<use-duplicate-detection>true</use-duplicate-detection>-->
+            <!--<forward-when-no-consumers>true</forward-when-no-consumers>-->
+            <!--<max-hops>1</max-hops>-->
+            <discovery-group-ref discovery-group-name="my-discovery-group"/>
+        </cluster-connection>
+    </cluster-connections>
 
-   <address-settings>
-      <!-- We set a redistribution delay of zero on all jms queues and topic subscriptions
-      Default redistribution delay as -1 which means "disable redistribution"
-      Setting it to a value > 0 means how long to wait before redistributing, if a consumer is closed
-      then another one quickly recreated you might want to set it thus, to avoid unnecessary
-      redistribution -->
-      <address-setting match="jms.#">
-          <dead-letter-address>jms.queue.DLQ</dead-letter-address>
-          <expiry-address>jms.queue.ExpiryQueue</expiry-address>
-          <message-counter-history-day-limit>10</message-counter-history-day-limit>
-          <max-delivery-attempts>3</max-delivery-attempts>
-          <redelivery-delay>60000</redelivery-delay>
-         <redistribution-delay>2000</redistribution-delay>
-          <address-full-policy>PAGE</address-full-policy>
-          <max-size-bytes>-1</max-size-bytes>
-          <page-size-bytes>10485760</page-size-bytes>
-      </address-setting>
-   </address-settings>
+    <!-- Other config -->
+    <security-settings>
+        <security-setting match="jms.#">
+            <permission type="createDurableQueue" roles="guest"/>
+            <permission type="deleteDurableQueue" roles="guest"/>
+            <permission type="createNonDurableQueue" roles="guest"/>
+            <permission type="deleteNonDurableQueue" roles="guest"/>
+            <permission type="consume" roles="guest"/>
+            <permission type="send" roles="guest"/>
+        </security-setting>
+    </security-settings>
+
+    <address-settings>
+        <address-setting match="jms.#">
+            <dead-letter-address>jms.queue.DLQ</dead-letter-address>
+            <expiry-address>jms.queue.ExpiryQueue</expiry-address>
+            <message-counter-history-day-limit>10</message-counter-history-day-limit>
+            <max-delivery-attempts>3</max-delivery-attempts>
+            <redelivery-delay>60000</redelivery-delay>
+            <redistribution-delay>2000</redistribution-delay>
+            <address-full-policy>PAGE</address-full-policy>
+            <max-size-bytes>-1</max-size-bytes>
+            <page-size-bytes>10485760</page-size-bytes>
+        </address-setting>
+        <address-setting match="sf.my-cluster.#">
+            <redistribution-delay>0</redistribution-delay>
+        </address-setting>
+    </address-settings>
 
 </configuration>

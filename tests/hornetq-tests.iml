@@ -12,10 +12,17 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="etc" level="project" />
     <orderEntry type="module" module-name="hornetq" />
-    <orderEntry type="library" name="messaging_jars" level="project" />
-    <orderEntry type="library" name="messaging-tests" level="project" />
+    <orderEntry type="library" name="3rd party" level="project" />
+    <orderEntry type="module-library" scope="TEST">
+      <library>
+        <CLASSES>
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/junit-4.7.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
 

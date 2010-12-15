@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="hornetq" />
     <orderEntry type="library" name="messaging_jars" level="project" />
     <orderEntry type="module" module-name="hornetq-jms-examples" />
+    <orderEntry type="library" name="3rd party" level="project" />
   </component>
 </module>
 

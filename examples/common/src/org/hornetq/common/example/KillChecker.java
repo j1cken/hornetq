@@ -48,7 +48,7 @@ public class KillChecker extends Thread
 
          try
          {
-            Thread.sleep(50);
+            Thread.sleep(10);
          }
          catch (Exception ignore)
          {

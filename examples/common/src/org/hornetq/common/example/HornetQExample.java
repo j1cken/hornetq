@@ -12,15 +12,16 @@
  */
 package org.hornetq.common.example;
 
+import org.hornetq.api.core.SimpleString;
 import org.hornetq.api.core.TransportConfiguration;
 import org.hornetq.api.core.management.HornetQServerControl;
 import org.hornetq.api.core.management.ObjectNameBuilder;
+import org.hornetq.api.core.management.QueueControl;
 import org.hornetq.api.jms.management.JMSQueueControl;
 import org.hornetq.core.client.impl.DelegatingSession;
 import org.hornetq.jms.client.HornetQConnection;
 
 import javax.jms.Connection;
-import javax.jms.JMSException;
 import javax.jms.Queue;
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
@@ -255,6 +256,18 @@ public abstract class HornetQExample {
         JMSQueueControl queueControl = (JMSQueueControl) MBeanServerInvocationHandler.newProxyInstance(mbsc,
                 ObjectNameBuilder.DEFAULT.getJMSQueueObjectName(q),
                 JMSQueueControl.class,
+                false);
+        return queueControl;
+    }
+
+    protected QueueControl getQueueControl(final String jmxRmiPort, final String q) throws Exception {
+        MBeanServerConnection mbsc = getMBeanServer(jmxRmiPort);
+
+        // Step 12. Create a JMSQueueControl proxy to manage the queue on the server
+        QueueControl queueControl = (QueueControl) MBeanServerInvocationHandler.newProxyInstance(mbsc,
+                ObjectNameBuilder.DEFAULT.getQueueObjectName(new SimpleString(q),
+                        new SimpleString(q)),
+                QueueControl.class,
                 false);
         return queueControl;
     }

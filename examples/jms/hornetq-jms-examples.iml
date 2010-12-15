@@ -68,7 +68,8 @@
       <sourceFolder url="file://$MODULE_DIR$/send-acknowledgements/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/static-selector-jms/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/transaction-failover/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/multiple-failover/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/starvation-issue/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/starvation-issue/test" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/browser/build" />
       <excludeFolder url="file://$MODULE_DIR$/browser/logs" />
       <excludeFolder url="file://$MODULE_DIR$/browser/server0/build" />
@@ -144,6 +145,15 @@
     <orderEntry type="library" name="messaging-jms-examples" level="project" />
     <orderEntry type="library" name="messaging_jars" level="project" />
     <orderEntry type="library" name="stomp" level="application" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/junit-4.7.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
 

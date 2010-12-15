@@ -1,8 +1,11 @@
 <configuration xmlns="urn:hornetq"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-               xsi:schemaLocation="urn:hornetq /schema/hornetq-configuration.xsd">
+               xsi:schemaLocation="urn:hornetq/schema/hornetq-configuration.xsd">
 
     <clustered>true</clustered>
+
+    <cluster-user>guest</cluster-user>
+    <cluster-password>guest</cluster-password>
 
     <!-- Connectors -->
 
@@ -25,18 +28,17 @@
     <broadcast-groups>
         <broadcast-group name="my-broadcast-group">
             <local-bind-address>127.0.0.1</local-bind-address>
-            <local-bind-port>-1</local-bind-port>
+            <local-bind-port>8889</local-bind-port>
             <group-address>231.7.7.7</group-address>
             <group-port>9876</group-port>
             <broadcast-period>100</broadcast-period>
-            <connector-ref connector-name="netty-connector"/>
+            <connector-ref>netty-connector</connector-ref>
         </broadcast-group>
     </broadcast-groups>
 
     <discovery-groups>
         <discovery-group name="my-discovery-group">
-          <local-bind-address>127.0.0.1</local-bind-address>
-          <!--<local-bind-port>-1</local-bind-port>-->
+            <local-bind-address>127.0.0.1</local-bind-address>
             <group-address>231.7.7.7</group-address>
             <group-port>9876</group-port>
             <refresh-timeout>10000</refresh-timeout>
@@ -46,6 +48,11 @@
     <cluster-connections>
         <cluster-connection name="my-cluster">
             <address>jms</address>
+            <connector-ref>netty-connector</connector-ref>
+            <!--<retry-interval>500</retry-interval>-->
+            <!--<use-duplicate-detection>true</use-duplicate-detection>-->
+            <!--<forward-when-no-consumers>false</forward-when-no-consumers>-->
+            <!--<max-hops>1</max-hops>-->
             <discovery-group-ref discovery-group-name="my-discovery-group"/>
         </cluster-connection>
     </cluster-connections>
@@ -80,6 +87,9 @@
             <address-full-policy>PAGE</address-full-policy>
             <max-size-bytes>-1</max-size-bytes>
             <page-size-bytes>10485760</page-size-bytes>
+        </address-setting>
+        <address-setting match="sf.my-cluster.#">
+            <redistribution-delay>0</redistribution-delay>
         </address-setting>
     </address-settings>
 

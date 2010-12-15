@@ -23,7 +23,7 @@ import javax.jms.TextMessage;
 import javax.naming.InitialContext;
 
 import org.hornetq.api.core.management.HornetQServerControl;
-import org.hornetq.api.jms.management.JMSQueueControl;
+import org.hornetq.api.core.management.QueueControl;
 import org.hornetq.common.example.HornetQExample;
 
 /**
@@ -39,6 +39,8 @@ public class StarvationExample extends HornetQExample {
     private static int totalMsgs = 0;
     private static final String SERVER0_JMX_RMI_PORT = "3000";
     private static final String SERVER1_JMX_RMI_PORT = "3001";
+
+    private static final Object lock = new Object();
 
     public static void main(final String[] args) {
         new StarvationExample().run(args);
@@ -59,6 +61,8 @@ public class StarvationExample extends HornetQExample {
             ic0 = getContext(0);
             // Step 2. Look-up the JMS Queue object from JNDI
             Queue queue0 = (Queue) ic0.lookup(QUEUE_EXAMPLE_QUEUE);
+            System.out.println("*** found Queue " + queue0.getQueueName());
+
             // Step 3. Look-up a JMS Connection Factory object from JNDI on server 0
             ConnectionFactory cf0 = (ConnectionFactory) ic0.lookup("/ConnectionFactory");
 
@@ -87,7 +91,9 @@ public class StarvationExample extends HornetQExample {
             MessageConsumer consumer0 = session0.createConsumer(queue0);
             MessageConsumer consumer1 = session1.createConsumer(queue1);
 
-            Thread.sleep(1000);
+//            Thread.sleep(1000);
+
+            System.out.println("*** getting server controls ...");
 
             HornetQServerControl serverControl0 = getServerControl(SERVER0_JMX_RMI_PORT);
             serverControl0.enableMessageCounters();
@@ -105,32 +111,24 @@ public class StarvationExample extends HornetQExample {
             assert serverControl1.isClustered() == true : "Server1 is not clustered!";
 
             // Step 12. We create a JMS MessageProducer object on server 0
-            int numMessages = 100;
+            int numMessages = 1000;
+
             Thread t0 = new MySendThread("0", session0, queue0, numMessages);
             Thread t1 = new MySendThread("1", session1, queue1, numMessages);
-
-
-            System.out.println("waiting for cluster bridge setup ...");
-            Thread.sleep(2000);
 
             // Step 13. We send some messages to server 0
 
             t0.start();
             t1.start();
 
-            Thread.sleep(100);
+            printStatistics(serverControl1, SERVER1_JMX_RMI_PORT);
 
-            System.out.println("*** server1 address names: ");
-            String[] addressNames1 = serverControl1.getAddressNames();
-            for (int i = 0; i < addressNames1.length; i++) {
-                System.out.println("* " + addressNames1[i]);
-            }
-            JMSQueueControl jmsQueueControl1 = getJMSQueueControl(SERVER1_JMX_RMI_PORT, queue1);
-            System.out.println("*** q count server1 (msgCount/added/delivered/scheduled): " + jmsQueueControl1.getMessageCount() + "/" +
-                    jmsQueueControl1.getMessagesAdded() + "/" + jmsQueueControl1.getDeliveringCount() + "/" +
-                    jmsQueueControl1.getScheduledCount());
+//            JMSQueueControl jmsQueueControl1 = getJMSQueueControl(SERVER1_JMX_RMI_PORT, queue1);
+//            System.out.println("*** q count server1 (msgCount/added/delivered/scheduled): " + jmsQueueControl1.getMessageCount() + "/" +
+//                    jmsQueueControl1.getMessagesAdded() + "/" + jmsQueueControl1.getDeliveringCount() + "/" +
+//                    jmsQueueControl1.getScheduledCount());
 
-
+            Thread.sleep(1000);
             killServer(1);
 
             t0.join();
@@ -138,53 +136,35 @@ public class StarvationExample extends HornetQExample {
 
             System.out.println("*** TOTAL SENT: " + totalMsgs);
 
-            System.out.println("*** server0 address names: ");
-            String[] addressNames = serverControl0.getAddressNames();
-            for (int i = 0; i < addressNames.length; i++) {
-                System.out.println("* " + addressNames[i]);
-            }
-
-            JMSQueueControl jmsQueueControl0 = getJMSQueueControl(SERVER0_JMX_RMI_PORT, queue0);
-            System.out.println("*** q count server0 (msgCount/added/delivered/scheduled): " + jmsQueueControl0.getMessageCount() + "/" +
-                    jmsQueueControl0.getMessagesAdded() + "/" + jmsQueueControl0.getDeliveringCount() + "/" +
-                    jmsQueueControl0.getScheduledCount());
+            printStatistics(serverControl0, SERVER0_JMX_RMI_PORT);
 
             // Step 14. We now consume those messages on *both* server 0 and server 1.
             // We note the messages have been distributed between servers in a round robin fashion
             // JMS Queues implement point-to-point message where each message is only ever consumed by a
             // maximum of one consumer
 
-            TextMessage message0 = null;
-            TextMessage message1 = null;
+            TextMessage message = null;
 
-            for (int i = 0; i < numMessages; i += 2) {
-                message0 = (TextMessage) consumer0.receive(5000);
+            int msgOnServer = getNumberOfMessages(SERVER0_JMX_RMI_PORT , "jms.queue.exampleQueue");
+            System.out.println("*** consuming " + msgOnServer + " messages on server 0:");
+            for (int i = 0; i < msgOnServer; i++) {
+                message = (TextMessage) consumer0.receive(5000);
 
-                System.out.println("Got message: " + message0.getText() + " from node 0");
+                System.out.println("Got message: " + message.getText() + " from node 0");
             }
 
             // Step 15. We acknowledge the messages consumed on node 0. The sessions are CLIENT_ACKNOWLEDGE so
             // messages will not get acknowledged until they are explicitly acknowledged.
             // Note that we *do not* acknowledge the message consumed on node 1 yet.
-            message0.acknowledge();
+            message.acknowledge();
 
-            // Step 16. We now close the session and consumer on node 1. (Closing the session automatically closes the
-            // consumer)
-//            session1.close();
+            printStatistics(serverControl0, SERVER0_JMX_RMI_PORT);
 
-            // Step 17. Since there is no more consumer on node 1, the messages on node 1 are now stranded (no local
-            // consumers)
-            // so HornetQ will redistribute them to node 0 so they can be consumed.
-
-            for (int i = 0; i < numMessages; i += 2) {
-                message0 = (TextMessage) consumer0.receive(5000);
-
-                System.out.println("Got message: " + message0.getText() + " from node 0");
+            System.out.println("*** check for redistribution of cluster bridge ...");
+            for (int i = 0; i < 5; i++) {
+                printQueueStats(SERVER0_JMX_RMI_PORT, getClusterBridgeAddress(serverControl0));
+                Thread.sleep(5000);
             }
-
-            // Step 18. We ack the messages.
-            message0.acknowledge();
-
             return true;
         } finally
 
@@ -209,6 +189,59 @@ public class StarvationExample extends HornetQExample {
         }
     }
 
+    private String getClusterBridgeAddress(HornetQServerControl serverControl) {
+        String[] addressNames = serverControl.getAddressNames();
+        for (int i = 0; i < addressNames.length; i++) {
+            if (addressNames[i].startsWith("sf.my-cluster")) {
+                return addressNames[i];
+            }
+        }
+        return null;
+    }
+
+    private int getNumberOfMessages(String rmiPort, String queue) throws Exception {
+        return getQueueControl(rmiPort, queue).getMessageCount();
+    }
+
+    private void printStatistics(HornetQServerControl serverControl, String rmiPort) throws Exception {
+        String[] addressNames = serverControl.getAddressNames();
+
+//        listAddressNames(addressNames);
+
+        for (int i = 0; i < addressNames.length; i++) {
+            printQueueStats(rmiPort, addressNames[i]);
+        }
+    }
+
+    void printQueueStats(String rmiPort, String addressName) throws Exception {
+        if (isInteresting(addressName)) {
+            QueueControl queueControl = getQueueControl(rmiPort, addressName);
+            System.out.println("*** q count (msgCount/added/delivered/scheduled) of " + addressName + ": " +
+                    queueControl.getMessageCount() + "/" +
+                    queueControl.getMessagesAdded() + "/" +
+                    queueControl.getDeliveringCount() + "/" +
+                    queueControl.getScheduledCount());
+        }
+    }
+
+    private void listAddressNames(String[] addressNames) {
+        System.out.println("*** address names: ");
+        for (int i = 0; i < addressNames.length; i++) {
+            System.out.println(addressNames[i]);
+        }
+    }
+
+    boolean isInteresting(String addressName) {
+        return addressName.startsWith("jms.queue") ||
+                addressName.startsWith("sf.my-cluster");
+    }
+
+    String getQName(String addressName) {
+        return addressName.startsWith("jms.queue")
+                ? addressName.substring(10, addressName.length())
+                : addressName.substring(14, addressName.length());
+    }
+
     private class MySendThread extends Thread {
 
         private MessageProducer producer;
@@ -217,33 +250,49 @@ public class StarvationExample extends HornetQExample {
         private String serverId;
         private Session session;
 
+
         public MySendThread(String s, Session session, Queue queue, int numMsgs) {
             serverId = s;
             this.session = session;
+            this.numMsgs = numMsgs;
             try {
                 producer = session.createProducer(queue);
             } catch (JMSException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
-            this.numMsgs = numMsgs;
         }
 
         @Override
         public void run() {
             try {
                 for (int i = 1; i <= numMsgs; i++) {
-                    TextMessage message = session.createTextMessage("This is text message " + i);
+
+                    TextMessage message = session.createTextMessage("This is text message " + i + "/" + serverId);
                     producer.send(message);
-                    System.out.println("Sent message: " + message.getText() + " with producer " + serverId);
-                    increaseTotal();
+                    System.out.println("Sent message: " + message.getText());
+
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            System.out.println("Server " + serverId + " increasing total of " + totalMsgs + " by 1.");
+                            increaseTotal();
+                        }
+                    }.start();
                 }
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
+//                throw new RuntimeException(e);
             }
 
         }
 
-        private synchronized void increaseTotal() {
+    }
+
+    private static void increaseTotal() {
+        synchronized (lock) {
             totalMsgs++;
         }
     }

@@ -76,7 +76,8 @@
   </macrodef>
 
    <target name="maven-init">
-    <property name="maven.home" location="${basedir}/tools/maven"/>
+    <!--<property name="maven.home" location="${basedir}/tools/maven"/>-->
+    <property name="maven.home" location="${user.home}/apps/apache-maven-3.0.1"/>
     <echo message="Maven Home set to ${maven.home}"/>
   </target>
 
