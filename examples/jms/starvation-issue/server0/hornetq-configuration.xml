@@ -17,8 +17,9 @@
 
     <clustered>true</clustered>
 
-    <cluster-user>guest</cluster-user>
-    <cluster-password>guest</cluster-password>
+    <!--<cluster-user>guest</cluster-user>-->
+    <!--<cluster-password>guest</cluster-password>-->
+    <security-enabled>false</security-enabled>
 
     <!-- Connectors -->
 
