@@ -286,89 +286,7 @@
     <favorites_list name="messaging" />
   </component>
   <component name="FileEditorManager">
-    <leaf>
-      <file leaf-file-name="StarvationExample.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/examples/jms/starvation-issue/src/org/hornetq/jms/example/StarvationExample.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="35" column="0" selection-start="1506" selection-end="1506" vertical-scroll-proportion="0.0">
-              <folding>
-                <marker date="1292419507000" expanded="false" signature="0:610" placeholder="/.../" />
-                <element signature="imports" expanded="true" />
-                <marker date="1292419507000" expanded="true" signature="1093:1505" placeholder="/**...*/" />
-                <marker date="1292419507000" expanded="true" signature="2022:9024" placeholder="{...}" />
-                <marker date="1292419507000" expanded="true" signature="9296:9534" placeholder="{...}" />
-                <marker date="1292419507000" expanded="true" signature="9925:10216" placeholder="{...}" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="StarvationExampleTest.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/examples/jms/starvation-issue/test/org/hornetq/jms/example/StarvationExampleTest.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="26" column="1" selection-start="858" selection-end="858" vertical-scroll-proportion="0.0">
-              <folding>
-                <element signature="imports" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="hornetq-configuration.xml" pinned="false" current="true" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/examples/jms/starvation-issue/server1/hornetq-configuration.xml">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="14" column="123" selection-start="554" selection-end="554" vertical-scroll-proportion="0.6268657">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="QueueImpl.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/org/hornetq/core/server/impl/QueueImpl.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="1565" column="0" selection-start="39825" selection-end="39825" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="BridgeImpl.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/org/hornetq/core/server/cluster/impl/BridgeImpl.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="59" column="43" selection-start="2370" selection-end="2370" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="SessionFailureListener.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/org/hornetq/api/core/client/SessionFailureListener.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="23" column="48" selection-start="955" selection-end="955" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="FailureListener.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/org/hornetq/core/remoting/FailureListener.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="23" column="17" selection-start="922" selection-end="922" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="ClusterConnectionBridge.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/org/hornetq/core/server/cluster/impl/ClusterConnectionBridge.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="231" column="15" selection-start="8868" selection-end="8868" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <leaf />
   </component>
   <component name="FindManager">
     <FindUsagesManager>
@@ -1332,16 +1250,6 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
           </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="hornetq" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="hornetq-trunk" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
         </subPane>
       </pane>
     </panes>
@@ -1840,14 +1748,14 @@
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4858357" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.17925592" sideWeight="0.0" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.17587373" sideWeight="0.0" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.42492917" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.59490085" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24946082" sideWeight="0.4957507" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32997844" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.25017974" sideWeight="0.5750708" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.26383898" sideWeight="0.40509915" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Dependency Viewer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24946082" sideWeight="0.5750708" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.31303117" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4490085" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Dataflow to this" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -2499,13 +2407,6 @@
     </buildFile>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/main/org/hornetq/api/core/management/ObjectNameBuilder.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="87" column="21" selection-start="2695" selection-end="2695" vertical-scroll-proportion="0.21980676">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="jar:///usr/lib/jvm/java-1.6.0/src.zip!/java/lang/Object.java">
       <provider selected="true" editor-type-id="text-editor">
         <state line="501" column="0" selection-start="24408" selection-end="24408" vertical-scroll-proportion="1.277311">
@@ -2557,42 +2458,58 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/org/hornetq/core/server/impl/QueueImpl.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="1565" column="0" selection-start="39825" selection-end="39825" vertical-scroll-proportion="0.0">
+        <state line="1565" column="0" selection-start="39825" selection-end="39825" vertical-scroll-proportion="0.15044248">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/org/hornetq/core/server/cluster/impl/BridgeImpl.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="59" column="43" selection-start="2370" selection-end="2370" vertical-scroll-proportion="0.0">
+        <state line="59" column="43" selection-start="2370" selection-end="2370" vertical-scroll-proportion="0.3761062">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/org/hornetq/api/core/client/SessionFailureListener.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="23" column="48" selection-start="955" selection-end="955" vertical-scroll-proportion="0.0">
+        <state line="23" column="48" selection-start="955" selection-end="955" vertical-scroll-proportion="0.24336283">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/org/hornetq/core/remoting/FailureListener.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="23" column="17" selection-start="922" selection-end="922" vertical-scroll-proportion="0.0">
+        <state line="23" column="17" selection-start="922" selection-end="922" vertical-scroll-proportion="0.26548672">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/org/hornetq/core/server/cluster/impl/ClusterConnectionBridge.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="231" column="15" selection-start="8868" selection-end="8868" vertical-scroll-proportion="0.0">
+        <state line="231" column="15" selection-start="8868" selection-end="8868" vertical-scroll-proportion="0.579646">
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/examples/jms/starvation-issue/server1/hornetq-configuration.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="14" column="123" selection-start="554" selection-end="554" vertical-scroll-proportion="0.33070865">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/examples/jms/starvation-issue/test/org/hornetq/jms/example/StarvationExampleTest.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="26" column="1" selection-start="858" selection-end="858" vertical-scroll-proportion="0.3414264">
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/examples/jms/starvation-issue/src/org/hornetq/jms/example/StarvationExample.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="35" column="0" selection-start="1506" selection-end="1506" vertical-scroll-proportion="0.0">
+        <state line="35" column="27" selection-start="1509" selection-end="1509" vertical-scroll-proportion="0.0">
           <folding>
             <marker date="1292419507000" expanded="false" signature="0:610" placeholder="/.../" />
             <element signature="imports" expanded="true" />
@@ -2604,18 +2521,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/examples/jms/starvation-issue/test/org/hornetq/jms/example/StarvationExampleTest.java">
+    <entry file="file://$PROJECT_DIR$/tests/src/org/hornetq/tests/integration/cluster/distribution/MessageRedistributionTest.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="26" column="1" selection-start="858" selection-end="858" vertical-scroll-proportion="0.0">
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/examples/jms/starvation-issue/server1/hornetq-configuration.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="14" column="123" selection-start="554" selection-end="554" vertical-scroll-proportion="0.6268657">
+        <state line="28" column="13" selection-start="974" selection-end="974" vertical-scroll-proportion="-13.673748">
           <folding />
         </state>
       </provider>
