@@ -23,6 +23,8 @@ import static org.junit.Assert.*;
  * Date: 12/15/10
  * Time: 9:40 AM
  * To change this template use File | Settings | File Templates.
+ *
+ * @author <a href="torben@redhat.com>Torben Jaeger</a>
  */
 public class StarvationExampleTest {
 

@@ -32,7 +32,7 @@ import org.hornetq.common.example.HornetQExample;
  * The consumer on one of the nodes is then closed, and we demonstrate that the "stranded" messages
  * are redistributed to the other node which has a consumer so they can be consumed.
  *
- * @author <a href="tim.fox@jboss.com>Tim Fox</a>
+ * @author <a href="torben@redhat.com>Torben Jaeger</a>
  */
 public class StarvationExample extends HornetQExample {
     private static final String QUEUE_EXAMPLE_QUEUE = "/queue/exampleQueue";

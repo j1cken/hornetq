@@ -287,26 +287,37 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="StarvationExample.java" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="StarvationExample.java" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/examples/jms/starvation-issue/src/org/hornetq/jms/example/StarvationExample.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="83" column="62" selection-start="3775" selection-end="3775" vertical-scroll-proportion="-2.9693594">
+            <state line="35" column="0" selection-start="1506" selection-end="1506" vertical-scroll-proportion="0.0">
               <folding>
-                <marker date="1292413621000" expanded="false" signature="0:610" placeholder="/.../" />
+                <marker date="1292419507000" expanded="false" signature="0:610" placeholder="/.../" />
                 <element signature="imports" expanded="true" />
-                <marker date="1292413621000" expanded="true" signature="1093:1505" placeholder="/**...*/" />
-                <marker date="1292413621000" expanded="true" signature="2022:9024" placeholder="{...}" />
-                <marker date="1292413621000" expanded="true" signature="9296:9534" placeholder="{...}" />
-                <marker date="1292413621000" expanded="true" signature="9925:10216" placeholder="{...}" />
+                <marker date="1292419507000" expanded="true" signature="1093:1505" placeholder="/**...*/" />
+                <marker date="1292419507000" expanded="true" signature="2022:9024" placeholder="{...}" />
+                <marker date="1292419507000" expanded="true" signature="9296:9534" placeholder="{...}" />
+                <marker date="1292419507000" expanded="true" signature="9925:10216" placeholder="{...}" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="hornetq-configuration.xml" pinned="false" current="false" current-in-tab="false">
+      <file leaf-file-name="StarvationExampleTest.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/examples/jms/starvation-issue/test/org/hornetq/jms/example/StarvationExampleTest.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="26" column="1" selection-start="858" selection-end="858" vertical-scroll-proportion="0.0">
+              <folding>
+                <element signature="imports" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="hornetq-configuration.xml" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/examples/jms/starvation-issue/server1/hornetq-configuration.xml">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="91" column="35" selection-start="3922" selection-end="3922" vertical-scroll-proportion="-9.583333">
+            <state line="86" column="15" selection-start="3661" selection-end="3661" vertical-scroll-proportion="0.19402985">
               <folding />
             </state>
           </provider>
@@ -379,10 +390,10 @@
         <option value="$PROJECT_DIR$/examples/jms/starvation-issue/server0/hornetq-configuration.xml" />
         <option value="$PROJECT_DIR$/examples/common/src/org/hornetq/common/example/KillChecker.java" />
         <option value="$PROJECT_DIR$/examples/jms/starvation-issue/src/org/hornetq/jms/example/StarvationExampleTest.java" />
-        <option value="$PROJECT_DIR$/examples/jms/starvation-issue/test/org/hornetq/jms/example/StarvationExampleTest.java" />
         <option value="$PROJECT_DIR$/examples/common/src/org/hornetq/common/example/HornetQExample.java" />
-        <option value="$PROJECT_DIR$/examples/jms/starvation-issue/src/org/hornetq/jms/example/StarvationExample.java" />
         <option value="$PROJECT_DIR$/examples/jms/starvation-issue/server1/hornetq-configuration.xml" />
+        <option value="$PROJECT_DIR$/examples/jms/starvation-issue/src/org/hornetq/jms/example/StarvationExample.java" />
+        <option value="$PROJECT_DIR$/examples/jms/starvation-issue/test/org/hornetq/jms/example/StarvationExampleTest.java" />
       </list>
     </option>
   </component>
@@ -2731,7 +2742,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="24" width="1448" height="854" extended-state="0" />
-    <editor active="true" />
+    <editor active="false" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.34702548" sideWeight="0.0" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -2739,7 +2750,7 @@
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4858357" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.17925592" sideWeight="0.0" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.17587373" sideWeight="0.0" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.42492917" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.42492917" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24946082" sideWeight="0.4957507" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32997844" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -3398,15 +3409,6 @@
     </buildFile>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/examples/jms/starvation-issue/test/org/hornetq/jms/example/StarvationExampleTest.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="31" column="120" selection-start="1174" selection-end="1174" vertical-scroll-proportion="0.5392405">
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/org/hornetq/api/core/management/ObjectNameBuilder.java">
       <provider selected="true" editor-type-id="text-editor">
         <state line="87" column="21" selection-start="2695" selection-end="2695" vertical-scroll-proportion="0.21980676">
@@ -3463,13 +3465,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/examples/jms/starvation-issue/server1/hornetq-configuration.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="91" column="35" selection-start="3922" selection-end="3922" vertical-scroll-proportion="-9.583333">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/org/hornetq/core/server/impl/QueueImpl.java">
       <provider selected="true" editor-type-id="text-editor">
         <state line="1565" column="0" selection-start="39825" selection-end="39825" vertical-scroll-proportion="0.0">
@@ -3507,15 +3502,31 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/examples/jms/starvation-issue/src/org/hornetq/jms/example/StarvationExample.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="83" column="62" selection-start="3775" selection-end="3775" vertical-scroll-proportion="-2.9693594">
+        <state line="35" column="0" selection-start="1506" selection-end="1506" vertical-scroll-proportion="0.0">
           <folding>
-            <marker date="1292413621000" expanded="false" signature="0:610" placeholder="/.../" />
+            <marker date="1292419507000" expanded="false" signature="0:610" placeholder="/.../" />
             <element signature="imports" expanded="true" />
-            <marker date="1292413621000" expanded="true" signature="1093:1505" placeholder="/**...*/" />
-            <marker date="1292413621000" expanded="true" signature="2022:9024" placeholder="{...}" />
-            <marker date="1292413621000" expanded="true" signature="9296:9534" placeholder="{...}" />
-            <marker date="1292413621000" expanded="true" signature="9925:10216" placeholder="{...}" />
+            <marker date="1292419507000" expanded="true" signature="1093:1505" placeholder="/**...*/" />
+            <marker date="1292419507000" expanded="true" signature="2022:9024" placeholder="{...}" />
+            <marker date="1292419507000" expanded="true" signature="9296:9534" placeholder="{...}" />
+            <marker date="1292419507000" expanded="true" signature="9925:10216" placeholder="{...}" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/examples/jms/starvation-issue/test/org/hornetq/jms/example/StarvationExampleTest.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="26" column="1" selection-start="858" selection-end="858" vertical-scroll-proportion="0.0">
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/examples/jms/starvation-issue/server1/hornetq-configuration.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="86" column="15" selection-start="3661" selection-end="3661" vertical-scroll-proportion="0.19402985">
+          <folding />
         </state>
       </provider>
     </entry>
