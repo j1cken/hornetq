@@ -52,8 +52,10 @@ import org.hornetq.core.paging.PageTransactionInfo;
 import org.hornetq.core.paging.PagedMessage;
 import org.hornetq.core.paging.PagingManager;
 import org.hornetq.core.paging.PagingStore;
-import org.hornetq.core.paging.cursor.PageSubscription;
+import org.hornetq.core.paging.cursor.PageCursorProvider;
 import org.hornetq.core.paging.cursor.PagePosition;
+import org.hornetq.core.paging.cursor.PageSubscription;
+import org.hornetq.core.paging.cursor.PageSubscriptionCounter;
 import org.hornetq.core.paging.cursor.impl.PagePositionImpl;
 import org.hornetq.core.paging.impl.PageTransactionInfoImpl;
 import org.hornetq.core.persistence.GroupingInfo;
@@ -75,9 +77,9 @@ import org.hornetq.core.server.group.impl.GroupBinding;
 import org.hornetq.core.server.impl.ServerMessageImpl;
 import org.hornetq.core.transaction.ResourceManager;
 import org.hornetq.core.transaction.Transaction;
+import org.hornetq.core.transaction.Transaction.State;
 import org.hornetq.core.transaction.TransactionOperation;
 import org.hornetq.core.transaction.TransactionPropertyIndexes;
-import org.hornetq.core.transaction.Transaction.State;
 import org.hornetq.core.transaction.impl.TransactionImpl;
 import org.hornetq.utils.DataConstants;
 import org.hornetq.utils.ExecutorFactory;
@@ -138,6 +140,10 @@ public class JournalStorageManager implements StorageManager
    public static final byte HEURISTIC_COMPLETION = 38;
 
    public static final byte ACKNOWLEDGE_CURSOR = 39;
+
+   public static final byte PAGE_CURSOR_COUNTER_VALUE = 40;
+
+   public static final byte PAGE_CURSOR_COUNTER_INC = 41;
 
    private UUID persistentID;
 
@@ -274,7 +280,7 @@ public class JournalStorageManager implements StorageManager
       }
       else
       {
-         idGenerator = new BatchingIDGenerator(0, JournalStorageManager.CHECKPOINT_BATCH_SIZE, bindingsJournal);      
+         idGenerator = new BatchingIDGenerator(0, JournalStorageManager.CHECKPOINT_BATCH_SIZE, bindingsJournal);
       }
       Journal localMessage = new JournalImpl(config.getJournalFileSize(),
                                              config.getJournalMinFiles(),
@@ -436,7 +442,7 @@ public class JournalStorageManager implements StorageManager
       }
 
       LargeServerMessageImpl largeMessage = (LargeServerMessageImpl)createLargeMessage();
-      
+
       largeMessage.copyHeadersAndProperties(message);
 
       largeMessage.setMessageID(id);
@@ -492,15 +498,17 @@ public class JournalStorageManager implements StorageManager
                                         syncNonTransactional,
                                         getContext(syncNonTransactional));
    }
-   
+
    public void storeCursorAcknowledge(long queueID, PagePosition position) throws Exception
    {
-     long ackID = idGenerator.generateID();
-     position.setRecordID(ackID);
-     messageJournal.appendAddRecord(ackID, ACKNOWLEDGE_CURSOR, new CursorAckRecordEncoding(queueID, position), syncNonTransactional, getContext(syncNonTransactional));
+      long ackID = idGenerator.generateID();
+      position.setRecordID(ackID);
+      messageJournal.appendAddRecord(ackID,
+                                     ACKNOWLEDGE_CURSOR,
+                                     new CursorAckRecordEncoding(queueID, position),
+                                     syncNonTransactional,
+                                     getContext(syncNonTransactional));
    }
-
-
 
    public void deleteMessage(final long messageID) throws Exception
    {
@@ -588,8 +596,7 @@ public class JournalStorageManager implements StorageManager
    {
       messageJournal.appendUpdateRecord(pageTransaction.getRecordID(),
                                         JournalStorageManager.PAGE_TRANSACTION,
-                                        new PageUpdateTXEncoding(pageTransaction.getTransactionID(),
-                                                                 depages),
+                                        new PageUpdateTXEncoding(pageTransaction.getTransactionID(), depages),
                                         syncNonTransactional,
                                         getContext(syncNonTransactional));
    }
@@ -617,9 +624,11 @@ public class JournalStorageManager implements StorageManager
    {
       long ackID = idGenerator.generateID();
       position.setRecordID(ackID);
-      messageJournal.appendAddRecordTransactional(txID, ackID, ACKNOWLEDGE_CURSOR, new CursorAckRecordEncoding(queueID, position));
+      messageJournal.appendAddRecordTransactional(txID,
+                                                  ackID,
+                                                  ACKNOWLEDGE_CURSOR,
+                                                  new CursorAckRecordEncoding(queueID, position));
    }
-   
 
    /* (non-Javadoc)
     * @see org.hornetq.core.persistence.StorageManager#deleteCursorAcknowledgeTransactional(long, long)
@@ -628,7 +637,6 @@ public class JournalStorageManager implements StorageManager
    {
       messageJournal.appendDeleteRecordTransactional(txID, ackID);
    }
-
 
    public long storeHeuristicCompletion(final Xid xid, final boolean isCommit) throws Exception
    {
@@ -802,6 +810,8 @@ public class JournalStorageManager implements StorageManager
       ArrayList<LargeServerMessage> largeMessages = new ArrayList<LargeServerMessage>();
 
       Map<Long, Map<Long, AddMessageRecord>> queueMap = new HashMap<Long, Map<Long, AddMessageRecord>>();
+
+      Map<Long, PageSubscription> pageSubscriptions = new HashMap<Long, PageSubscription>();
 
       final int totalSize = records.size();
 
@@ -1007,23 +1017,60 @@ public class JournalStorageManager implements StorageManager
             {
                CursorAckRecordEncoding encoding = new CursorAckRecordEncoding();
                encoding.decode(buff);
-               
+
                encoding.position.setRecordID(record.id);
-               
-               QueueBindingInfo queueInfo = queueInfos.get(encoding.queueID);
-               
-               if (queueInfo != null)
+
+               PageSubscription sub = locateSubscription(encoding.queueID, pageSubscriptions, queueInfos, pagingManager);
+
+               if (sub != null)
                {
-                  SimpleString address = queueInfo.getAddress();
-                  PagingStore store = pagingManager.getPageStore(address);
-                  PageSubscription cursor = store.getCursorProvier().getSubscription(encoding.queueID);
-                  cursor.reloadACK(encoding.position);
+                  sub.reloadACK(encoding.position);
                }
                else
                {
                   log.warn("Can't find queue " + encoding.queueID + " while reloading ACKNOWLEDGE_CURSOR");
                }
-               
+
+               break;
+            }
+            case PAGE_CURSOR_COUNTER_VALUE:
+            {
+               PageCountRecord encoding = new PageCountRecord();
+
+               encoding.decode(buff);
+
+               PageSubscription sub = locateSubscription(encoding.queueID, pageSubscriptions, queueInfos, pagingManager);
+
+               if (sub != null)
+               {
+                  sub.getCounter().loadValue(record.id, encoding.value);
+               }
+               else
+               {
+                  log.warn("Can't find queue " + encoding.queueID + " while reloading ACKNOWLEDGE_CURSOR");
+               }
+
+               break;
+            }
+
+            case PAGE_CURSOR_COUNTER_INC:
+            {
+               PageCountRecordInc encoding = new PageCountRecordInc();
+
+               encoding.decode(buff);
+
+
+               PageSubscription sub = locateSubscription(encoding.queueID, pageSubscriptions, queueInfos, pagingManager);
+
+               if (sub != null)
+               {
+                  sub.getCounter().loadValue(record.id, encoding.value);
+               }
+               else
+               {
+                  log.warn("Can't find queue " + encoding.queueID + " while reloading ACKNOWLEDGE_CURSOR");
+               }
+
                break;
             }
             default:
@@ -1079,7 +1126,7 @@ public class JournalStorageManager implements StorageManager
          }
       }
 
-      loadPreparedTransactions(postOffice, pagingManager, resourceManager, queues, preparedTransactions, duplicateIDMap);
+      loadPreparedTransactions(postOffice, pagingManager, resourceManager, queues, queueInfos, preparedTransactions, duplicateIDMap, pageSubscriptions);
 
       for (LargeServerMessage msg : largeMessages)
       {
@@ -1106,7 +1153,7 @@ public class JournalStorageManager implements StorageManager
             }
          }
       }
-      
+
       // To recover positions on Iterators
       if (pagingManager != null)
       {
@@ -1126,6 +1173,35 @@ public class JournalStorageManager implements StorageManager
       }
       journalLoaded = true;
       return info;
+   }
+
+   /**
+    * @param queueID
+    * @param pageSubscriptions
+    * @param queueInfos
+    * @return
+    */
+   private PageSubscription locateSubscription(final long queueID,
+                                               final Map<Long, PageSubscription> pageSubscriptions,
+                                               final Map<Long, QueueBindingInfo> queueInfos,
+                                               final PagingManager pagingManager) throws Exception
+   {
+
+      PageSubscription subs = pageSubscriptions.get(queueID);
+      if (subs == null)
+      {
+         QueueBindingInfo queueInfo = queueInfos.get(queueID);
+
+         if (queueInfo != null)
+         {
+            SimpleString address = queueInfo.getAddress();
+            PagingStore store = pagingManager.getPageStore(address);
+            subs = store.getCursorProvier().getSubscription(queueID);
+            pageSubscriptions.put(queueID, subs);
+         }
+      }
+      
+      return subs;
    }
 
    // grouping handler operations
@@ -1165,6 +1241,48 @@ public class JournalStorageManager implements StorageManager
    public void deleteQueueBinding(final long queueBindingID) throws Exception
    {
       bindingsJournal.appendDeleteRecord(queueBindingID, true);
+   }
+
+   /* (non-Javadoc)
+    * @see org.hornetq.core.persistence.StorageManager#storePageCounterAdd(long, long, int)
+    */
+   public long storePageCounterInc(long txID, long queueID, int value) throws Exception
+   {
+      long recordID = idGenerator.generateID();
+      messageJournal.appendAddRecordTransactional(txID,
+                                                  recordID,
+                                                  JournalStorageManager.PAGE_CURSOR_COUNTER_INC,
+                                                  new PageCountRecordInc(queueID, value));
+      return recordID;
+   }
+
+   /* (non-Javadoc)
+    * @see org.hornetq.core.persistence.StorageManager#storePageCounter(long, long, long)
+    */
+   public long storePageCounter(long txID, long queueID, long value) throws Exception
+   {
+      long recordID = idGenerator.generateID();
+      messageJournal.appendAddRecordTransactional(txID,
+                                                  recordID,
+                                                  JournalStorageManager.PAGE_CURSOR_COUNTER_VALUE,
+                                                  new PageCountRecord(queueID, value));
+      return recordID;
+   }
+
+   /* (non-Javadoc)
+    * @see org.hornetq.core.persistence.StorageManager#deleteIncrementRecord(long, long)
+    */
+   public void deleteIncrementRecord(long txID, long recordID) throws Exception
+   {
+      messageJournal.appendDeleteRecordTransactional(txID, recordID);
+   }
+
+   /* (non-Javadoc)
+    * @see org.hornetq.core.persistence.StorageManager#deletePageCounter(long, long)
+    */
+   public void deletePageCounter(long txID, long recordID) throws Exception
+   {
+      messageJournal.appendDeleteRecordTransactional(txID, recordID);
    }
 
    public JournalLoadInformation loadBindingJournal(final List<QueueBindingInfo> queueBindingInfos,
@@ -1413,8 +1531,10 @@ public class JournalStorageManager implements StorageManager
                                          final PagingManager pagingManager,
                                          final ResourceManager resourceManager,
                                          final Map<Long, Queue> queues,
+                                         final Map<Long, QueueBindingInfo> queueInfos,
                                          final List<PreparedTransactionInfo> preparedTransactions,
-                                         final Map<SimpleString, List<Pair<byte[], Long>>> duplicateIDMap) throws Exception
+                                         final Map<SimpleString, List<Pair<byte[], Long>>> duplicateIDMap,
+                                         final Map<Long, PageSubscription> pageSubscriptions) throws Exception
    {
       // recover prepared transactions
       for (PreparedTransactionInfo preparedTransaction : preparedTransactions)
@@ -1564,6 +1684,34 @@ public class JournalStorageManager implements StorageManager
                   // and make sure the rollback will work well also
                   break;
                }
+               case PAGE_CURSOR_COUNTER_VALUE:
+               {
+                  log.warn("PAGE_CURSOR_COUNTER_VALUE record used on a prepared statement, what shouldn't happen");
+
+                  break;
+               }
+
+               case PAGE_CURSOR_COUNTER_INC:
+               {
+                  PageCountRecordInc encoding = new PageCountRecordInc();
+
+                  encoding.decode(buff);
+
+
+                  PageSubscription sub = locateSubscription(encoding.queueID, pageSubscriptions, queueInfos, pagingManager);
+
+                  if (sub != null)
+                  {
+                     sub.getCounter().replayIncrement(tx, record.id, encoding.value);
+                  }
+                  else
+                  {
+                     log.warn("Can't find queue " + encoding.queueID + " while reloading ACKNOWLEDGE_CURSOR");
+                  }
+
+                  break;
+               }
+
                default:
                {
                   JournalStorageManager.log.warn("InternalError: Record type " + recordType +
@@ -2252,7 +2400,98 @@ public class JournalStorageManager implements StorageManager
       }
 
    }
-   
+
+   private static final class PageCountRecord implements EncodingSupport
+   {
+
+      PageCountRecord()
+      {
+
+      }
+
+      PageCountRecord(long queueID, long value)
+      {
+         this.queueID = queueID;
+         this.value = value;
+      }
+
+      long queueID;
+
+      long value;
+
+      /* (non-Javadoc)
+       * @see org.hornetq.core.journal.EncodingSupport#getEncodeSize()
+       */
+      public int getEncodeSize()
+      {
+         return DataConstants.SIZE_LONG * 2;
+      }
+
+      /* (non-Javadoc)
+       * @see org.hornetq.core.journal.EncodingSupport#encode(org.hornetq.api.core.HornetQBuffer)
+       */
+      public void encode(HornetQBuffer buffer)
+      {
+         buffer.writeLong(queueID);
+         buffer.writeLong(value);
+      }
+
+      /* (non-Javadoc)
+       * @see org.hornetq.core.journal.EncodingSupport#decode(org.hornetq.api.core.HornetQBuffer)
+       */
+      public void decode(HornetQBuffer buffer)
+      {
+         queueID = buffer.readLong();
+         value = buffer.readLong();
+      }
+
+   }
+
+   private static final class PageCountRecordInc implements EncodingSupport
+   {
+
+      PageCountRecordInc()
+      {
+
+      }
+
+      PageCountRecordInc(long queueID, int value)
+      {
+         this.queueID = queueID;
+         this.value = value;
+      }
+
+      long queueID;
+
+      int value;
+
+      /* (non-Javadoc)
+       * @see org.hornetq.core.journal.EncodingSupport#getEncodeSize()
+       */
+      public int getEncodeSize()
+      {
+         return DataConstants.SIZE_LONG + DataConstants.SIZE_INT;
+      }
+
+      /* (non-Javadoc)
+       * @see org.hornetq.core.journal.EncodingSupport#encode(org.hornetq.api.core.HornetQBuffer)
+       */
+      public void encode(HornetQBuffer buffer)
+      {
+         buffer.writeLong(queueID);
+         buffer.writeInt(value);
+      }
+
+      /* (non-Javadoc)
+       * @see org.hornetq.core.journal.EncodingSupport#decode(org.hornetq.api.core.HornetQBuffer)
+       */
+      public void decode(HornetQBuffer buffer)
+      {
+         queueID = buffer.readLong();
+         value = buffer.readInt();
+      }
+
+   }
 
    private static final class AddMessageRecord
    {
@@ -2275,7 +2514,7 @@ public class JournalStorageManager implements StorageManager
          this.queueID = queueID;
          this.position = position;
       }
-      
+
       public CursorAckRecordEncoding()
       {
          this.position = new PagePositionImpl();
