@@ -42,12 +42,13 @@ public class KillChecker extends Thread
 
             // Goodbye!
 
+             file.delete();
             Runtime.getRuntime().halt(666);
          }
 
          try
          {
-            Thread.sleep(50);
+            Thread.sleep(10);
          }
          catch (Exception ignore)
          {

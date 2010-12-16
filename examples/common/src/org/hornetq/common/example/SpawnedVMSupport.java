@@ -13,15 +13,17 @@
 
 package org.hornetq.common.example;
 
+import org.hornetq.core.logging.Logger;
+
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import org.hornetq.core.logging.Logger;
 
 /**
  * @author <a href="mailto:ovidiu@feodorov.com">Ovidiu Feodorov</a>
@@ -74,6 +76,17 @@ public class SpawnedVMSupport
 
       sb.append("java").append(' ');
       String vmarg = vmargs;
+
+       // override vmarg with server specific vmargs (e. g. setting rmi port)
+       File serverProps = new File(configDir + "/server.properties");
+       if (serverProps.exists()) {
+           Properties properties = new Properties();
+           properties.load(new FileInputStream(serverProps));
+           vmarg = properties.getProperty("server.override.args");
+           if (log.isInfoEnabled()) {
+               log.info("*** Override of server vmargs! Using instead: " + vmarg);
+           }
+       }
 
       String osName = System.getProperty("os.name");
       osName = (osName != null) ? osName.toLowerCase() : "";

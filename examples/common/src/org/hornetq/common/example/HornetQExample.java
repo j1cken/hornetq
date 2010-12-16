@@ -12,17 +12,29 @@
  */
 package org.hornetq.common.example;
 
+import org.hornetq.api.core.SimpleString;
 import org.hornetq.api.core.TransportConfiguration;
+import org.hornetq.api.core.management.HornetQServerControl;
+import org.hornetq.api.core.management.ObjectNameBuilder;
+import org.hornetq.api.core.management.QueueControl;
+import org.hornetq.api.jms.management.JMSQueueControl;
 import org.hornetq.core.client.impl.DelegatingSession;
 import org.hornetq.jms.client.HornetQConnection;
 
+import javax.jms.Connection;
+import javax.jms.Queue;
+import javax.management.MBeanServerConnection;
+import javax.management.MBeanServerInvocationHandler;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
+import javax.naming.InitialContext;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.logging.Logger;
-
-import javax.jms.Connection;
-import javax.naming.InitialContext;
 
 /**
  * a baee class for examples. This takes care of starting and stopping the server as well as deploying any queue needed.
@@ -247,4 +259,75 @@ public abstract class HornetQExample
          System.exit(0);
       }
    }
+
+    protected HornetQServerControl getServerControl(final String jmxRmiPort) throws Exception {
+        MBeanServerConnection mbsc = getMBeanServer(jmxRmiPort);
+
+
+        // Step 12. Create a JMSQueueControl proxy to manage the queue on the server
+        HornetQServerControl serverControl = (HornetQServerControl) MBeanServerInvocationHandler.newProxyInstance(mbsc,
+                ObjectNameBuilder.DEFAULT.getHornetQServerObjectName(),
+                HornetQServerControl.class,
+                false);
+        return serverControl;
+    }
+
+    private MBeanServerConnection getMBeanServer(String jmxRmiPort) throws IOException {
+        // Step 10. Create JMX Connector to connect to the server's MBeanServer
+        final String JMX_URL = "service:jmx:rmi:///jndi/rmi://localhost:" + jmxRmiPort + "/jmxrmi";
+        JMXConnector connector = JMXConnectorFactory.connect(new JMXServiceURL(JMX_URL), new HashMap());
+
+        // Step 11. Retrieve the MBeanServerConnection
+        return connector.getMBeanServerConnection();
+    }
+
+    protected JMSQueueControl getJMSQueueControl(final String jmxRmiPort, final Queue q) throws Exception {
+        return getJMSQueueControl(jmxRmiPort, q.getQueueName());
+
+    }
+
+    protected JMSQueueControl getJMSQueueControl(final String jmxRmiPort, final String q) throws Exception {
+        MBeanServerConnection mbsc = getMBeanServer(jmxRmiPort);
+
+        // Step 12. Create a JMSQueueControl proxy to manage the queue on the server
+        JMSQueueControl queueControl = (JMSQueueControl) MBeanServerInvocationHandler.newProxyInstance(mbsc,
+                ObjectNameBuilder.DEFAULT.getJMSQueueObjectName(q),
+                JMSQueueControl.class,
+                false);
+        return queueControl;
+    }
+
+    protected QueueControl getQueueControl(final String jmxRmiPort, final String q) throws Exception {
+        MBeanServerConnection mbsc = getMBeanServer(jmxRmiPort);
+
+        // Step 12. Create a JMSQueueControl proxy to manage the queue on the server
+        QueueControl queueControl = (QueueControl) MBeanServerInvocationHandler.newProxyInstance(mbsc,
+                ObjectNameBuilder.DEFAULT.getQueueObjectName(new SimpleString(q),
+                        new SimpleString(q)),
+                QueueControl.class,
+                false);
+        return queueControl;
+    }
+
+    protected void clearServer(final int... serverId) {
+        for (int i = 0; i < serverId.length; i++) {
+            log.info("deleting server" + serverId[i] + "/data directory ...");
+
+            File path = new File("server" + serverId[i] + "/data");
+            deleteDirectory(path);
+        }
+    }
+
+    private void deleteDirectory(File path) {
+        if (path.exists()) {
+            File[] files = path.listFiles();
+            for (int i = 0; i < files.length; i++) {
+                if (files[i].isDirectory()) {
+                    deleteDirectory(files[i]);
+                } else {
+                    files[i].delete();
+                }
+            }
+        }
+    }
 }

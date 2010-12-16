@@ -23,6 +23,8 @@
    <!-- Clustering configuration -->
    <broadcast-groups>
       <broadcast-group name="my-broadcast-group">
+          <local-bind-address>127.0.0.1</local-bind-address>
+          <local-bind-port>8888</local-bind-port>
          <group-address>231.7.7.7</group-address>
          <group-port>9876</group-port>
          <broadcast-period>100</broadcast-period>
@@ -32,6 +34,7 @@
    
    <discovery-groups>
       <discovery-group name="my-discovery-group">
+          <local-bind-address>127.0.0.1</local-bind-address>
          <group-address>231.7.7.7</group-address>
          <group-port>9876</group-port>
          <refresh-timeout>10000</refresh-timeout>

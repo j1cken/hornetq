@@ -18,13 +18,13 @@
 
    <property name="hornetq.run_script" value="false" />
 
-   <fail message="*** Please build by using the build.sh script (or build.bat on Windows) *** ">
-      <condition>
-         <not>
-            <equals arg1="${hornetq.run_script}" arg2="true"/>
-         </not>
-      </condition>
-   </fail>
+   <!--<fail message="*** Please build by using the build.sh script (or build.bat on Windows) *** ">-->
+      <!--<condition>-->
+         <!--<not>-->
+            <!--<equals arg1="${hornetq.run_script}" arg2="true"/>-->
+         <!--</not>-->
+      <!--</condition>-->
+   <!--</fail>-->
 
    <dirname property="imported.basedir" file="${ant.file.example}"/>
    <property file="${imported.basedir}/config/ant.properties"/>
@@ -142,6 +142,7 @@
       <property file="${imported.basedir}/config/server.properties"/>
       <java classname="${example.classname}" fork="true" resultproperty="example-result">
          <jvmarg line="${client.args}"/>
+         <jvmarg value="-ea"/>
          <jvmarg value="-Dhornetq.example.server.classpath=${serverclasspath}"/>
          <jvmarg value="-Dhornetq.example.server.args=${server.args}"/>
          <jvmarg value="-Dhornetq.example.logserveroutput=${hornetq.example.logserveroutput}"/>
