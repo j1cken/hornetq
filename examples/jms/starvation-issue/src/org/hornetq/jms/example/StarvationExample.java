@@ -128,7 +128,7 @@ public class StarvationExample extends HornetQExample {
 //                    jmsQueueControl1.getMessagesAdded() + "/" + jmsQueueControl1.getDeliveringCount() + "/" +
 //                    jmsQueueControl1.getScheduledCount());
 
-            Thread.sleep(1000);
+            Thread.sleep(1500);
             killServer(1);
 
             t0.join();
@@ -145,7 +145,7 @@ public class StarvationExample extends HornetQExample {
 
             TextMessage message = null;
 
-            int msgOnServer = getNumberOfMessages(SERVER0_JMX_RMI_PORT , "jms.queue.exampleQueue");
+            long msgOnServer = getNumberOfMessages(SERVER0_JMX_RMI_PORT, "jms.queue.exampleQueue");
             System.out.println("*** consuming " + msgOnServer + " messages on server 0:");
             for (int i = 0; i < msgOnServer; i++) {
                 message = (TextMessage) consumer0.receive(5000);
@@ -199,7 +199,7 @@ public class StarvationExample extends HornetQExample {
         return null;
     }
 
-    private int getNumberOfMessages(String rmiPort, String queue) throws Exception {
+    private long getNumberOfMessages(String rmiPort, String queue) throws Exception {
         return getQueueControl(rmiPort, queue).getMessageCount();
     }
 
@@ -285,6 +285,7 @@ public class StarvationExample extends HornetQExample {
                     e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 }
 //                throw new RuntimeException(e);
+                e.printStackTrace();
             }
 
         }
