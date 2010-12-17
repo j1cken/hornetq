@@ -41,29 +41,27 @@ public class PageSubscriptionCounterImpl implements PageSubscriptionCounter
    // Constants -----------------------------------------------------
    static final Logger log = Logger.getLogger(PageSubscriptionCounterImpl.class);
 
-
    // Attributes ----------------------------------------------------
-   
-   // TODO: making this configurable
+
    private static final int FLUSH_COUNTER = 1000;
 
    private final long subscriptionID;
-   
+
    // the journal record id that is holding the current value
    private long recordID = -1;
-   
-   private final boolean persistent;
+
+   private boolean persistent;
 
    private final StorageManager storage;
 
    private final AtomicLong value = new AtomicLong(0);
 
    private final LinkedList<Long> incrementRecords = new LinkedList<Long>();
-   
+
    private LinkedList<Pair<Long, Integer>> loadList;
 
    private final Executor executor;
-   
+
    private final Runnable cleanupCheck = new Runnable()
    {
       public void run()
@@ -71,14 +69,17 @@ public class PageSubscriptionCounterImpl implements PageSubscriptionCounter
          cleanup();
       }
    };
-   
+
    // protected LinkedList
 
    // Static --------------------------------------------------------
 
    // Constructors --------------------------------------------------
 
-   public PageSubscriptionCounterImpl(final StorageManager storage, final boolean persistent, final long subscriptionID, final Executor executor)
+   public PageSubscriptionCounterImpl(final StorageManager storage,
+                                      final boolean persistent,
+                                      final long subscriptionID,
+                                      final Executor executor)
    {
       this.subscriptionID = subscriptionID;
       this.storage = storage;
@@ -99,12 +100,20 @@ public class PageSubscriptionCounterImpl implements PageSubscriptionCounter
     */
    public void increment(Transaction tx, int add) throws Exception
    {
-      tx.setContainsPersistent();
+
+      if (persistent)
+      {
+         tx.setContainsPersistent();
+         long id = storage.storePageCounterInc(tx.getID(), this.subscriptionID, add);
+         replayIncrement(tx, id, add);
+      }
+      else
+      {
+         replayIncrement(tx, -1, add);
+      }
+
+
       
-      long id = storage.storePageCounterInc(tx.getID(), this.subscriptionID, add);
-
-      replayIncrement(tx, id, add);
-
    }
 
    /**
@@ -126,7 +135,7 @@ public class PageSubscriptionCounterImpl implements PageSubscriptionCounter
 
       oper.operations.add(new ItemOper(this, recordID, add));
    }
-   
+
    /* (non-Javadoc)
     * @see org.hornetq.core.paging.cursor.impl.PagingSubscriptionCounterInterface#loadValue(long, long)
     */
@@ -135,8 +144,6 @@ public class PageSubscriptionCounterImpl implements PageSubscriptionCounter
       this.value.set(value);
       this.recordID = recordID;
    }
-   
-   
 
    /* (non-Javadoc)
     * @see org.hornetq.core.paging.cursor.impl.PagingSubscriptionCounterInterface#incrementProcessed(long, int)
@@ -158,9 +165,9 @@ public class PageSubscriptionCounterImpl implements PageSubscriptionCounter
    {
       if (loadList == null)
       {
-         loadList = new LinkedList<Pair<Long,Integer>>();
+         loadList = new LinkedList<Pair<Long, Integer>>();
       }
-      
+
       loadList.add(new Pair<Long, Integer>(id, add));
    }
 
@@ -169,13 +176,16 @@ public class PageSubscriptionCounterImpl implements PageSubscriptionCounter
     */
    public void processReload()
    {
-      for (Pair<Long, Integer> incElement : loadList)
+      if (loadList != null)
       {
-         value.addAndGet(incElement.b);
-         incrementRecords.add(incElement.a);
+         for (Pair<Long, Integer> incElement : loadList)
+         {
+            value.addAndGet(incElement.b);
+            incrementRecords.add(incElement.a);
+         }
+         loadList.clear();
+         loadList = null;
       }
-      loadList.clear();
-      loadList = null;
    }
 
    /* (non-Javadoc)
@@ -184,14 +194,24 @@ public class PageSubscriptionCounterImpl implements PageSubscriptionCounter
    public void addInc(long id, int variance)
    {
       value.addAndGet(variance);
-      incrementRecords.add(id);
+      
+      if (id >= 0)
+      {
+         incrementRecords.add(id);
+      }
+   }
+   
+   /** used on testing only */
+   public void setPersistent(final boolean persistent)
+   {
+      this.persistent = persistent;
    }
 
    /** This method sould alwas be called from a single threaded executor */
    protected void cleanup()
    {
       ArrayList<Long> deleteList;
-      
+
       long valueReplace;
       synchronized (this)
       {
@@ -200,33 +220,33 @@ public class PageSubscriptionCounterImpl implements PageSubscriptionCounter
          deleteList.addAll(incrementRecords);
          incrementRecords.clear();
       }
-      
+
       long newRecordID = -1;
 
       long txCleanup = storage.generateUniqueID();
-      
+
       try
       {
          for (Long value : deleteList)
          {
             storage.deleteIncrementRecord(txCleanup, value);
          }
-         
+
          if (recordID >= 0)
          {
             storage.deletePageCounter(txCleanup, recordID);
          }
-         
-         newRecordID = storage.storePageCounter(txCleanup, subscriptionID,  valueReplace);
-         
+
+         newRecordID = storage.storePageCounter(txCleanup, subscriptionID, valueReplace);
+
          storage.commit(txCleanup);
-         
+
          storage.waitOnOperations();
       }
       catch (Exception e)
       {
          newRecordID = recordID;
-         
+
          log.warn(e.getMessage(), e);
          try
          {
