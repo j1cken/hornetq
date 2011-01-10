@@ -1258,6 +1258,24 @@ public class HornetQServerControlImpl extends AbstractControl implements HornetQ
          blockOnIO();
       }
    }
+   
+
+   /* (non-Javadoc)
+    * @see org.hornetq.api.core.management.HornetQServerControl#listProducersInfoAsJSON()
+    */
+   public String listProducersInfoAsJSON() throws Exception
+   {
+      JSONArray producers = new JSONArray();
+      
+      
+      for (ServerSession session : server.getSessions())
+      {
+         session.describeProducersInfo(producers);
+      }
+      
+      return producers.toString();
+   }
+
 
    public Object[] getConnectors() throws Exception
    {
@@ -1868,7 +1886,7 @@ public class HornetQServerControlImpl extends AbstractControl implements HornetQ
    }
 
    @Override
-   MBeanOperationInfo[] fillMBeanOperationInfo()
+   protected MBeanOperationInfo[] fillMBeanOperationInfo()
    {
       return MBeanInfoHelper.getMBeanOperationsInfo(HornetQServerControl.class);
    }

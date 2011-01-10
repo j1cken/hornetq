@@ -27,6 +27,8 @@ import org.hornetq.core.transaction.Transaction;
 public interface ServerConsumer extends Consumer
 {
    long getID();
+   
+   Object getConnectionID();
 
    void close(boolean failed) throws Exception;
 
@@ -51,6 +53,8 @@ public interface ServerConsumer extends Consumer
    boolean isBrowseOnly();
 
    long getCreationTime();
+
+   String getSessionID();
 }
 
 

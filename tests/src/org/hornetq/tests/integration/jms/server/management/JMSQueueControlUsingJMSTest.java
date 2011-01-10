@@ -13,7 +13,6 @@
 
 package org.hornetq.tests.integration.jms.server.management;
 
-import java.util.List;
 import java.util.Map;
 
 import javax.jms.QueueConnection;
@@ -27,7 +26,6 @@ import org.hornetq.api.jms.JMSFactoryType;
 import org.hornetq.api.jms.management.JMSQueueControl;
 import org.hornetq.core.remoting.impl.invm.InVMConnectorFactory;
 import org.hornetq.jms.client.HornetQConnectionFactory;
-import org.hornetq.jms.client.HornetQDestination;
 import org.hornetq.jms.client.HornetQQueue;
 
 /**
@@ -100,7 +98,7 @@ public class JMSQueueControlUsingJMSTest extends JMSQueueControlTest
 
          public long countMessages(final String filter) throws Exception
          {
-            return (Long)proxy.invokeOperation("countMessages", filter);
+            return ((Number)proxy.invokeOperation("countMessages", filter)).intValue();
          }
 
          public boolean expireMessage(final String messageID) throws Exception
@@ -135,7 +133,7 @@ public class JMSQueueControlUsingJMSTest extends JMSQueueControlTest
 
          public long getMessageCount()
          {
-            return (Long)proxy.retrieveAttributeValue("messageCount");
+            return ((Number)proxy.retrieveAttributeValue("messageCount")).longValue();
          }
 
          public long getMessagesAdded()
@@ -284,6 +282,11 @@ public class JMSQueueControlUsingJMSTest extends JMSQueueControlTest
          {
             // TODO: Add a test for this
             return null;
+         }
+
+         public String listConsumersAsJSON() throws Exception
+         {
+            return (String)proxy.invokeOperation("listConsumersAsJSON");
          }
       };
    }

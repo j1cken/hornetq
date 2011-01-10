@@ -60,6 +60,12 @@ public class JMSServerControlUsingJMSTest extends JMSServerControlTest
    // Constructors --------------------------------------------------
 
    // JMSServerControlTest overrides --------------------------------
+   @Override
+   protected int getNumberOfConsumers()
+   {
+      return 1;
+   }
+
 
    @Override
    protected void setUp() throws Exception
@@ -259,6 +265,11 @@ public class JMSServerControlUsingJMSTest extends JMSServerControlTest
          public void createConnectionFactory(String name, boolean ha, boolean useDiscovery, int cfType, String connectors, String jndiBindings) throws Exception
          {
             proxy.invokeOperation("createConnectionFactory", name, ha, useDiscovery, cfType, connectors, jndiBindings);
+         }
+
+         public String listAllConsumersAsJSON() throws Exception
+         {
+            return (String)proxy.invokeOperation("listAllConsumersAsJSON");
          }
 
 

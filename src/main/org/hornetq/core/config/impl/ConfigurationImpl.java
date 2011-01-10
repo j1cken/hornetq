@@ -183,6 +183,8 @@ public class ConfigurationImpl implements Configuration
    public static final String DEFAULT_LOG_DELEGATE_FACTORY_CLASS_NAME = JULLogDelegateFactory.class.getCanonicalName();
 
    // Attributes -----------------------------------------------------------------------------
+   
+   protected String name = "ConfigurationImpl::" + System.identityHashCode(this);
 
    protected boolean clustered = ConfigurationImpl.DEFAULT_CLUSTERED;
 
@@ -1361,4 +1363,34 @@ public class ConfigurationImpl implements Configuration
       this.connectorServiceConfigurations = configs;
    }
 
+   /* (non-Javadoc)
+    * @see org.hornetq.core.config.Configuration#getName()
+    */
+   public String getName()
+   {
+      return name;
+   }
+
+   /* (non-Javadoc)
+    * @see org.hornetq.core.config.Configuration#setName(java.lang.String)
+    */
+   public void setName(String name)
+   {
+      this.name = name;
+   }
+
+   @Override
+   public String toString()
+   {
+      StringBuffer sb = new StringBuffer("HornetQ Configuration (");
+      sb.append("clustered=").append(clustered).append(",");
+      sb.append("backup=").append(backup).append(",");
+      sb.append("sharedStore=").append(sharedStore).append(",");
+      sb.append("journalDirectory=").append(journalDirectory).append(",");
+      sb.append("bindingsDirectory=").append(bindingsDirectory).append(",");
+      sb.append("largeMessagesDirectory=").append(largeMessagesDirectory).append(",");
+      sb.append("pagingDirectory=").append(pagingDirectory);
+      sb.append(")");
+      return sb.toString();
+   }
 }

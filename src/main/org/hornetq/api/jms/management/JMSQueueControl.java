@@ -13,7 +13,6 @@
 
 package org.hornetq.api.jms.management;
 
-import java.util.List;
 import java.util.Map;
 
 import javax.management.MBeanOperationInfo;
@@ -72,7 +71,7 @@ public interface JMSQueueControl extends DestinationControl
     */
    @Operation(desc = "Returns the list of JNDI bindings associated")
    String[] getJNDIBindings();
-   
+
    /**
     * Add the JNDI binding to this destination
     */
@@ -213,7 +212,6 @@ public interface JMSQueueControl extends DestinationControl
    @Operation(desc = "Reset the message counters", impact = MBeanOperationInfo.INFO)
    void resetMessageCounter() throws Exception;
 
-
    /**
     * Lists the message counter for this queue as a HTML table.
     */
@@ -249,5 +247,8 @@ public interface JMSQueueControl extends DestinationControl
     */
    @Operation(desc = "Resume the queue.", impact = MBeanOperationInfo.ACTION)
    void resume() throws Exception;
+
+   @Operation(desc = "List all the existent consumers on the Queue")
+   String listConsumersAsJSON() throws Exception;
 
 }

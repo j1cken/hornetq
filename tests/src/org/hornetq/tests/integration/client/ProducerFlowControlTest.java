@@ -16,12 +16,19 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import junit.framework.Assert;
 
 import org.hornetq.api.core.SimpleString;
-import org.hornetq.api.core.client.*;
+import org.hornetq.api.core.client.ClientConsumer;
+import org.hornetq.api.core.client.ClientMessage;
+import org.hornetq.api.core.client.ClientProducer;
+import org.hornetq.api.core.client.ClientSession;
+import org.hornetq.api.core.client.ClientSessionFactory;
+import org.hornetq.api.core.client.MessageHandler;
+import org.hornetq.api.core.client.ServerLocator;
 import org.hornetq.core.client.impl.ClientProducerCreditManagerImpl;
 import org.hornetq.core.client.impl.ClientProducerCredits;
 import org.hornetq.core.client.impl.ClientProducerInternal;
@@ -64,10 +71,11 @@ public class ProducerFlowControlTest extends ServiceTestBase
    protected void tearDown() throws Exception
    {
       locator.close();
-      
-      super.tearDown(); 
+
+      super.tearDown();
    }
-// TODO need to test crashing a producer with unused credits returns them to the pool
+
+   // TODO need to test crashing a producer with unused credits returns them to the pool
 
    public void testFlowControlSingleConsumer() throws Exception
    {
@@ -98,7 +106,7 @@ public class ProducerFlowControlTest extends ServiceTestBase
    {
       testFlowControl(1000, 500, 10 * 1024, 1024, 1024, 0, 1, 1, 0, false);
    }
-   
+
    public void testFlowControlSingleConsumerSlowConsumer() throws Exception
    {
       testFlowControl(100, 500, 1024, 512, 512, 512, 1, 1, 10, false);
@@ -209,7 +217,6 @@ public class ProducerFlowControlTest extends ServiceTestBase
       repos.addMatch(address.toString(), addressSettings);
 
       server.start();
-
 
       locator.setProducerWindowSize(producerWindowSize);
       locator.setConsumerWindowSize(consumerWindowSize);
@@ -325,7 +332,7 @@ public class ProducerFlowControlTest extends ServiceTestBase
 
       for (int i = 0; i < numConsumers; i++)
       {
-         handlers[i].latch.await();
+         assertTrue(handlers[i].latch.await(5, TimeUnit.MINUTES));
 
          Assert.assertNull(handlers[i].exception);
       }
@@ -337,7 +344,7 @@ public class ProducerFlowControlTest extends ServiceTestBase
       ProducerFlowControlTest.log.info("rate is " + rate + " msgs / sec");
 
       session.close();
-      
+
       sf.close();
 
       server.stop();
@@ -357,7 +364,6 @@ public class ProducerFlowControlTest extends ServiceTestBase
       repos.addMatch(address.toString(), addressSettings);
 
       server.start();
-
 
       locator.setProducerWindowSize(1024);
       locator.setConsumerWindowSize(1024);

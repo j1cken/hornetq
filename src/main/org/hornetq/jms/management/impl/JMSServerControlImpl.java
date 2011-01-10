@@ -21,14 +21,13 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.ListenerNotFoundException;
-import javax.management.MBeanInfo;
 import javax.management.MBeanNotificationInfo;
+import javax.management.MBeanOperationInfo;
 import javax.management.Notification;
 import javax.management.NotificationBroadcasterSupport;
 import javax.management.NotificationEmitter;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
-import javax.management.StandardMBean;
 
 import org.hornetq.api.core.management.Parameter;
 import org.hornetq.api.jms.JMSFactoryType;
@@ -38,6 +37,7 @@ import org.hornetq.api.jms.management.JMSQueueControl;
 import org.hornetq.api.jms.management.JMSServerControl;
 import org.hornetq.api.jms.management.TopicControl;
 import org.hornetq.core.filter.Filter;
+import org.hornetq.core.management.impl.AbstractControl;
 import org.hornetq.core.management.impl.MBeanInfoHelper;
 import org.hornetq.core.server.ServerConsumer;
 import org.hornetq.core.server.ServerSession;
@@ -55,7 +55,7 @@ import org.hornetq.utils.json.JSONObject;
  * @version <tt>$Revision$</tt>
  * 
  */
-public class JMSServerControlImpl extends StandardMBean implements JMSServerControl, NotificationEmitter
+public class JMSServerControlImpl extends AbstractControl implements JMSServerControl, NotificationEmitter
 {
 
    // Constants -----------------------------------------------------
@@ -145,7 +145,7 @@ public class JMSServerControlImpl extends StandardMBean implements JMSServerCont
 
    public JMSServerControlImpl(final JMSServerManager server) throws Exception
    {
-      super(JMSServerControl.class);
+      super(JMSServerControl.class, server.getHornetQServer().getStorageManager());
       this.server = server;
       broadcaster = new NotificationBroadcasterSupport();
    }
@@ -170,17 +170,17 @@ public class JMSServerControlImpl extends StandardMBean implements JMSServerCont
 
       try
       {
-         if(useDiscovery)
+         if (useDiscovery)
          {
-            if(connectorNames == null || connectorNames.length == 0)
+            if (connectorNames == null || connectorNames.length == 0)
             {
                throw new IllegalArgumentException("no discovery group name supplied");
             }
             server.createConnectionFactory(name,
-                                        ha,
-                                        JMSFactoryType.valueOf(cfType),
-                                        connectorNames[0],
-                                        JMSServerControlImpl.convert(bindings));
+                                           ha,
+                                           JMSFactoryType.valueOf(cfType),
+                                           connectorNames[0],
+                                           JMSServerControlImpl.convert(bindings));
          }
          else
          {
@@ -192,12 +192,11 @@ public class JMSServerControlImpl extends StandardMBean implements JMSServerCont
             }
 
             server.createConnectionFactory(name,
-                  ha,
-                  JMSFactoryType.valueOf(cfType),
-                  connectorList,
-                  JMSServerControlImpl.convert(bindings));
+                                           ha,
+                                           JMSFactoryType.valueOf(cfType),
+                                           connectorList,
+                                           JMSServerControlImpl.convert(bindings));
          }
-
 
          sendNotification(NotificationType.CONNECTION_FACTORY_CREATED, name);
       }
@@ -213,7 +212,12 @@ public class JMSServerControlImpl extends StandardMBean implements JMSServerCont
     * The ConnectionFactory is bound to JNDI for all the specified bindings Strings.
     *  
     */
-   public void createConnectionFactory(String name, boolean ha, boolean useDiscovery, int cfType, String connectors, String jndiBindings) throws Exception
+   public void createConnectionFactory(String name,
+                                       boolean ha,
+                                       boolean useDiscovery,
+                                       int cfType,
+                                       String connectors,
+                                       String jndiBindings) throws Exception
    {
       createConnectionFactory(name, ha, useDiscovery, cfType, toArray(connectors), toArray(jndiBindings));
    }
@@ -547,13 +551,17 @@ public class JMSServerControlImpl extends StandardMBean implements JMSServerCont
 
          for (RemotingConnection connection : connections)
          {
-            JSONObject obj = new JSONObject();
-            obj.put("connectionID", connection.getID().toString());
-            obj.put("clientAddress", connection.getRemoteAddress());
-            obj.put("creationTime", connection.getCreationTime());
-            obj.put("clientID", jmsSessions.get(connection.getID()).getMetaData("jms-client-id"));
-            obj.put("principal", jmsSessions.get(connection.getID()).getUsername());
-            array.put(obj);
+            ServerSession session = jmsSessions.get(connection.getID());
+            if (session != null)
+            {
+               JSONObject obj = new JSONObject();
+               obj.put("connectionID", connection.getID().toString());
+               obj.put("clientAddress", connection.getRemoteAddress());
+               obj.put("creationTime", connection.getCreationTime());
+               obj.put("clientID", session.getMetaData("jms-client-id"));
+               obj.put("principal", session.getUsername());
+               array.put(obj);
+            }
          }
          return array.toString();
       }
@@ -584,45 +592,43 @@ public class JMSServerControlImpl extends StandardMBean implements JMSServerCont
                   Set<ServerConsumer> consumers = session.getServerConsumers();
                   for (ServerConsumer consumer : consumers)
                   {
-                     JSONObject obj = new JSONObject();
-                     obj.put("consumerID", consumer.getID());
-                     obj.put("connectionID", connectionID);
-                     obj.put("queueName", consumer.getQueue().getName().toString());
-                     obj.put("browseOnly", consumer.isBrowseOnly());
-                     obj.put("creationTime", consumer.getCreationTime());
-                     // JMS consumer with message filter use the queue's filter
-                     Filter queueFilter = consumer.getQueue().getFilter();
-                     if (queueFilter != null)
+                     JSONObject obj = toJSONObject(consumer);
+                     if (obj != null)
                      {
-                        obj.put("filter", queueFilter.getFilterString().toString());
+                        array.put(obj);
                      }
-                     String[] destinationInfo = determineJMSDestination(consumer.getQueue().getAddress().toString());
-                     if (destinationInfo == null)
-                     {
-                        continue;
-                     }
-                     obj.put("destinationName", destinationInfo[0]);
-                     obj.put("destinationType", destinationInfo[1]);
-                     if (destinationInfo[1].equals("topic"))
-                     {
-                        try
-                        {
-                           HornetQDestination.decomposeQueueNameForDurableSubscription(consumer.getQueue()
-                                                                                               .getName()
-                                                                                               .toString());
-                           obj.put("durable", true);
-                        }
-                        catch (IllegalArgumentException e)
-                        {
-                           obj.put("durable", false);
-                        }
-                     }
-                     else
-                     {
-                        obj.put("durable", false);
-                     }
-                     array.put(obj);
                   }
+               }
+            }
+         }
+         return array.toString();
+      }
+      finally
+      {
+         blockOnIO();
+      }
+   }
+
+   public String listAllConsumersAsJSON() throws Exception
+   {
+      checkStarted();
+
+      clearIO();
+
+      try
+      {
+         JSONArray array = new JSONArray();
+
+         Set<ServerSession> sessions = server.getHornetQServer().getSessions();
+         for (ServerSession session : sessions)
+         {
+            Set<ServerConsumer> consumers = session.getServerConsumers();
+            for (ServerConsumer consumer : consumers)
+            {
+               JSONObject obj = toJSONObject(consumer);
+               if (obj != null)
+               {
+                  array.put(obj);
                }
             }
          }
@@ -682,21 +688,18 @@ public class JMSServerControlImpl extends StandardMBean implements JMSServerCont
       }
    }
 
-   @Override
-   public MBeanInfo getMBeanInfo()
-   {
-      MBeanInfo info = super.getMBeanInfo();
-      return new MBeanInfo(info.getClassName(),
-                           info.getDescription(),
-                           info.getAttributes(),
-                           info.getConstructors(),
-                           MBeanInfoHelper.getMBeanOperationsInfo(JMSServerControl.class),
-                           info.getNotifications());
-   }
-
    // Package protected ---------------------------------------------
 
    // Protected -----------------------------------------------------
+   /* (non-Javadoc)
+    * @see org.hornetq.core.management.impl.AbstractControl#fillMBeanOperationInfo()
+    */
+   @Override
+   protected MBeanOperationInfo[] fillMBeanOperationInfo()
+   {
+      return MBeanInfoHelper.getMBeanOperationsInfo(JMSServerControl.class);
+   }
+
 
    // Private -------------------------------------------------------
 
@@ -713,34 +716,6 @@ public class JMSServerControlImpl extends StandardMBean implements JMSServerCont
          throw new IllegalStateException("HornetQ JMS Server is not started. it can not be managed yet");
       }
    }
-
-   protected void clearIO()
-   {
-      // the storage manager could be null on the backup on certain components
-      if (server.getHornetQServer().getStorageManager() != null)
-      {
-         server.getHornetQServer().getStorageManager().clearContext();
-      }
-   }
-
-   protected void blockOnIO()
-   {
-      // the storage manager could be null on the backup on certain components
-      if (server.getHornetQServer().getStorageManager() != null)
-      {
-         try
-         {
-            server.getHornetQServer().getStorageManager().waitOnOperations();
-            server.getHornetQServer().getStorageManager().clearContext();
-         }
-         catch (Exception e)
-         {
-            throw new RuntimeException(e.getMessage(), e);
-         }
-      }
-
-   }
-
    // Inner classes -------------------------------------------------
 
    public static enum NotificationType
@@ -842,6 +817,48 @@ public class JMSServerControlImpl extends StandardMBean implements JMSServerCont
          blockOnIO();
       }
       return array.toString();
+   }
+
+   private JSONObject toJSONObject(ServerConsumer consumer) throws Exception
+   {
+      JSONObject obj = new JSONObject();
+      obj.put("consumerID", consumer.getID());
+      obj.put("connectionID", consumer.getConnectionID());
+      obj.put("sessionID", consumer.getSessionID());
+      obj.put("queueName", consumer.getQueue().getName().toString());
+      obj.put("browseOnly", consumer.isBrowseOnly());
+      obj.put("creationTime", consumer.getCreationTime());
+      // JMS consumer with message filter use the queue's filter
+      Filter queueFilter = consumer.getQueue().getFilter();
+      if (queueFilter != null)
+      {
+         obj.put("filter", queueFilter.getFilterString().toString());
+      }
+      String[] destinationInfo = determineJMSDestination(consumer.getQueue().getAddress().toString());
+      if (destinationInfo == null)
+      {
+         return null;
+      }
+      obj.put("destinationName", destinationInfo[0]);
+      obj.put("destinationType", destinationInfo[1]);
+      if (destinationInfo[1].equals("topic"))
+      {
+         try
+         {
+            HornetQDestination.decomposeQueueNameForDurableSubscription(consumer.getQueue().getName().toString());
+            obj.put("durable", true);
+         }
+         catch (IllegalArgumentException e)
+         {
+            obj.put("durable", false);
+         }
+      }
+      else
+      {
+         obj.put("durable", false);
+      }
+
+      return obj;
    }
 
 }
