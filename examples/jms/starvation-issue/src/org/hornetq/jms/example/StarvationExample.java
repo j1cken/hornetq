@@ -123,11 +123,6 @@ public class StarvationExample extends HornetQExample {
 
             printStatistics(serverControl1, SERVER1_JMX_RMI_PORT);
 
-//            JMSQueueControl jmsQueueControl1 = getJMSQueueControl(SERVER1_JMX_RMI_PORT, queue1);
-//            System.out.println("*** q count server1 (msgCount/added/delivered/scheduled): " + jmsQueueControl1.getMessageCount() + "/" +
-//                    jmsQueueControl1.getMessagesAdded() + "/" + jmsQueueControl1.getDeliveringCount() + "/" +
-//                    jmsQueueControl1.getScheduledCount());
-
             Thread.sleep(1500);
             killServer(1);
 
@@ -138,11 +133,6 @@ public class StarvationExample extends HornetQExample {
 
             printStatistics(serverControl0, SERVER0_JMX_RMI_PORT);
 
-            // Step 14. We now consume those messages on *both* server 0 and server 1.
-            // We note the messages have been distributed between servers in a round robin fashion
-            // JMS Queues implement point-to-point message where each message is only ever consumed by a
-            // maximum of one consumer
-
             TextMessage message = null;
 
             long msgOnServer = getNumberOfMessages(SERVER0_JMX_RMI_PORT, "jms.queue.exampleQueue");
@@ -152,10 +142,6 @@ public class StarvationExample extends HornetQExample {
 
                 System.out.println("Got message: " + message.getText() + " from node 0");
             }
-
-            // Step 15. We acknowledge the messages consumed on node 0. The sessions are CLIENT_ACKNOWLEDGE so
-            // messages will not get acknowledged until they are explicitly acknowledged.
-            // Note that we *do not* acknowledge the message consumed on node 1 yet.
             message.acknowledge();
 
             printStatistics(serverControl0, SERVER0_JMX_RMI_PORT);
